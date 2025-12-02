@@ -30,7 +30,7 @@ class SettingsController extends Controller
 
         // Valores padrão se não existirem
         $defaults = [
-            'app_name' => config('app.name', 'SCKV'),
+            'app_name' => config('app.name', 'Road Master'),
             'timezone' => config('app.timezone', 'America/Sao_Paulo'),
             'date_format' => 'd/m/Y',
             'time_format' => 'H:i',

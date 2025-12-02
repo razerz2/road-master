@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-Este guia fornece informações para desenvolvedores que desejam contribuir ou estender o sistema SCKV.
+Este guia fornece informações para desenvolvedores que desejam contribuir ou estender o sistema Road Master.
 
 ## 🛠️ Ambiente de Desenvolvimento
 
@@ -18,8 +18,8 @@ Este guia fornece informações para desenvolvedores que desejam contribuir ou e
 
 ```bash
 # Clonar repositório
-git clone [url-do-repositorio] sckv
-cd sckv
+git clone [url-do-repositorio] road-master
+cd road-master
 
 # Instalar dependências
 composer install

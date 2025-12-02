@@ -1,6 +1,6 @@
 # Documentação dos Módulos
 
-Este documento descreve em detalhes cada módulo do sistema SCKV.
+Este documento descreve em detalhes cada módulo do sistema Road Master.
 
 ## 📑 Índice
 

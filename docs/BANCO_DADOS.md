@@ -2,7 +2,7 @@
 
 ## 📊 Visão Geral
 
-O banco de dados do SCKV foi projetado para suportar todas as funcionalidades do sistema de gestão de frotas, com relacionamentos bem definidos e índices otimizados.
+O banco de dados do Road Master foi projetado para suportar todas as funcionalidades do sistema de gestão de frotas, com relacionamentos bem definidos e índices otimizados.
 
 ## 🗄️ Estrutura do Banco
 

@@ -27,8 +27,8 @@ Antes de começar, certifique-se de ter instalado:
 ### 1. Clonar o Repositório
 
 ```bash
-git clone [url-do-repositorio] sckv
-cd sckv
+git clone [url-do-repositorio] road-master
+cd road-master
 ```
 
 ### 2. Instalar Dependências PHP
@@ -48,7 +48,7 @@ cp .env.example .env
 Edite o arquivo `.env` e configure:
 
 ```env
-APP_NAME="SCKV"
+APP_NAME="Road Master"
 APP_ENV=local
 APP_KEY=
 APP_DEBUG=true
@@ -62,7 +62,7 @@ DB_CONNECTION=sqlite
 # DB_CONNECTION=mysql
 # DB_HOST=127.0.0.1
 # DB_PORT=3306
-# DB_DATABASE=sckv
+# DB_DATABASE=road_master
 # DB_USERNAME=root
 # DB_PASSWORD=
 
@@ -95,7 +95,7 @@ DB_CONNECTION=sqlite
 
 1. Crie um banco de dados:
 ```sql
-CREATE DATABASE sckv CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE road_master CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 2. Configure o `.env`:
@@ -103,7 +103,7 @@ CREATE DATABASE sckv CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=sckv
+DB_DATABASE=road_master
 DB_USERNAME=seu_usuario
 DB_PASSWORD=sua_senha
 ```
@@ -194,7 +194,7 @@ chown -R www-data:www-data storage bootstrap/cache
 
 Após a instalação, você pode fazer login com:
 
-- **Email**: admin@sckv.com
+- **Email**: admin@roadmaster.com
 - **Senha**: admin123
 
 ⚠️ **IMPORTANTE**: Altere a senha padrão imediatamente após o primeiro acesso!
@@ -381,10 +381,10 @@ server {
 
 ### 4. Configurar Supervisor (Queue Worker)
 
-Crie o arquivo `/etc/supervisor/conf.d/sckv-worker.conf`:
+Crie o arquivo `/etc/supervisor/conf.d/road-master-worker.conf`:
 
 ```ini
-[program:sckv-worker]
+[program:road-master-worker]
 process_name=%(program_name)s_%(process_num)02d
 command=php /caminho/do/projeto/artisan queue:work --sleep=3 --tries=3 --max-time=3600
 autostart=true
@@ -403,7 +403,7 @@ Recarregue o Supervisor:
 ```bash
 sudo supervisorctl reread
 sudo supervisorctl update
-sudo supervisorctl start sckv-worker:*
+sudo supervisorctl start road-master-worker:*
 ```
 
 ### 5. Configurar Cron

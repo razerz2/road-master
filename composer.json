@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "road-master/road-master",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Road Master - Sistema de Controle de KM e Veículos",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

@@ -155,7 +155,7 @@
                                             class="block mt-1 w-full" 
                                             type="text" 
                                             name="app_name" 
-                                            :value="old('app_name', $settings['general']['app_name'] ?? config('app.name', 'SCKV'))" 
+                                            :value="old('app_name', $settings['general']['app_name'] ?? config('app.name', 'Road Master'))" 
                                             required 
                                         />
                                         <x-input-error :messages="$errors->get('app_name')" class="mt-2" />

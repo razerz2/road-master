@@ -8,7 +8,7 @@
                         @php
                             $logoPath = \App\Models\SystemSetting::get('system_logo');
                             $logoUrl = $logoPath ? route('storage.serve', ['path' => $logoPath]) : null;
-                            $appName = \App\Models\SystemSetting::get('app_name') ?? config('app.name', 'SCKV');
+                            $appName = \App\Models\SystemSetting::get('app_name') ?? config('app.name', 'Road Master');
                         @endphp
                         @if($logoUrl)
                             <img src="{{ $logoUrl }}" alt="{{ $appName }}" class="block h-9 w-auto object-contain">

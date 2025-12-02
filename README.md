@@ -1,8 +1,8 @@
-# SCKV - Sistema de Controle de KM e Veículos
+# Road Master - Sistema de Controle de KM e Veículos
 
 ## 📋 Sobre o Projeto
 
-O **SCKV** (Sistema de Controle de KM e Veículos) é uma aplicação web desenvolvida em Laravel para gerenciamento completo de frotas de veículos. O sistema permite controlar quilometragem, abastecimentos, manutenções, percursos e notificações de revisão de forma centralizada e eficiente.
+O **Road Master** é uma aplicação web desenvolvida em Laravel para gerenciamento completo de frotas de veículos. O sistema permite controlar quilometragem, abastecimentos, manutenções, percursos e notificações de revisão de forma centralizada e eficiente.
 
 ## 🚀 Início Rápido
 
@@ -17,8 +17,8 @@ O **SCKV** (Sistema de Controle de KM e Veículos) é uma aplicação web desenv
 
 ```bash
 # Clonar o repositório
-git clone [url-do-repositorio] sckv
-cd sckv
+git clone [url-do-repositorio] road-master
+cd road-master
 
 # Instalar dependências
 composer install
@@ -44,7 +44,7 @@ Acesse: `http://localhost:8000`
 
 Após a instalação, você pode fazer login com:
 
-- **Email**: admin@sckv.com
+- **Email**: admin@roadmaster.com
 - **Senha**: admin123
 
 ⚠️ **Importante**: Altere a senha padrão após o primeiro acesso!

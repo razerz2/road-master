@@ -2,12 +2,12 @@
 
 ## 📐 Visão Geral
 
-O SCKV é uma aplicação web desenvolvida seguindo o padrão **MVC (Model-View-Controller)** do Laravel, com arquitetura modular e separação clara de responsabilidades.
+O Road Master é uma aplicação web desenvolvida seguindo o padrão **MVC (Model-View-Controller)** do Laravel, com arquitetura modular e separação clara de responsabilidades.
 
 ## 🏗️ Estrutura de Diretórios
 
 ```
-sckv/
+road-master/
 ├── app/                          # Código da aplicação
 │   ├── Console/
 │   │   └── Commands/            # Comandos Artisan personalizados

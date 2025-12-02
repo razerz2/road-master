@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-Este documento descreve todas as rotas disponíveis no sistema SCKV, organizadas por funcionalidade.
+Este documento descreve todas as rotas disponíveis no sistema Road Master, organizadas por funcionalidade.
 
 ## 🔐 Autenticação
 
