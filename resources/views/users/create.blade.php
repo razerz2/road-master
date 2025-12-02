@@ -79,6 +79,15 @@
                             </div>
 
                             <div>
+                                <x-input-label for="role" :value="__('Perfil')" />
+                                <select id="role" name="role" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm" required>
+                                    <option value="condutor" {{ old('role') == 'condutor' ? 'selected' : '' }}>Condutor</option>
+                                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('role')" class="mt-2" />
+                            </div>
+
+                            <div>
                                 <x-input-label for="password" :value="__('Senha')" />
                                 <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required />
                                 <x-input-error :messages="$errors->get('password')" class="mt-2" />
@@ -87,15 +96,6 @@
                             <div>
                                 <x-input-label for="password_confirmation" :value="__('Confirmar Senha')" />
                                 <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required />
-                            </div>
-
-                            <div>
-                                <x-input-label for="role" :value="__('Perfil')" />
-                                <select id="role" name="role" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm" required>
-                                    <option value="condutor" {{ old('role') == 'condutor' ? 'selected' : '' }}>Condutor</option>
-                                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                                </select>
-                                <x-input-error :messages="$errors->get('role')" class="mt-2" />
                             </div>
 
                             <div>
