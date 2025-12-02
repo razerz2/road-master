@@ -80,16 +80,54 @@ class ImportController extends Controller
                 'sheet_names' => $sheetNames,
             ], now()->addHours(1));
 
-            // Disparar Job para processar importação em background
-            ProcessImportJob::dispatch(
-                $filePath,
-                $file->getClientOriginalName(),
-                $request->year,
-                $request->vehicle_id,
-                $importId,
-                $sheetNames,
-                $userId
-            );
+            // Processar síncrono por padrão (garante que funcione sem worker)
+            // Para produção, configure QUEUE_CONNECTION=sync no .env ou tenha um worker rodando
+            $processSync = env('QUEUE_CONNECTION', 'sync') === 'sync' || $request->has('sync');
+            
+            if ($processSync) {
+                // Processar imediatamente (síncrono) - útil para debug
+                $progress = Cache::get("import_progress_{$importId}", []);
+                $progress['logs'][] = [
+                    'time' => now()->format('H:i:s'),
+                    'type' => 'info',
+                    'message' => 'Processando importação de forma síncrona...',
+                ];
+                Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
+                
+                try {
+                    $job = new ProcessImportJob(
+                        $filePath,
+                        $file->getClientOriginalName(),
+                        $request->year,
+                        $request->vehicle_id,
+                        $importId,
+                        $sheetNames,
+                        $userId
+                    );
+                    $job->handle();
+                } catch (\Exception $e) {
+                    $progress = Cache::get("import_progress_{$importId}", []);
+                    $progress['status'] = 'error';
+                    $progress['error'] = $e->getMessage();
+                    $progress['logs'][] = [
+                        'time' => now()->format('H:i:s'),
+                        'type' => 'error',
+                        'message' => 'Erro na importação: ' . $e->getMessage(),
+                    ];
+                    Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
+                }
+            } else {
+                // Disparar Job para processar importação em background
+                ProcessImportJob::dispatch(
+                    $filePath,
+                    $file->getClientOriginalName(),
+                    $request->year,
+                    $request->vehicle_id,
+                    $importId,
+                    $sheetNames,
+                    $userId
+                );
+            }
 
             // Redirecionar imediatamente para a página de progresso
             return redirect()->route('import.progress', ['id' => $importId]);

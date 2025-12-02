@@ -84,8 +84,30 @@ class ProcessImportJob implements ShouldQueue
                 Cache::put('active_imports', $activeImports, now()->addHours(1));
             }
             
-            // Criar instância do import
-            $import = new KMImport(
+            // Atualizar progresso antes de iniciar importação
+            $progress = Cache::get("import_progress_{$this->importId}", []);
+            $progress['logs'][] = [
+                'time' => now()->format('H:i:s'),
+                'type' => 'info',
+                'message' => 'Criando instância de importação...',
+            ];
+            Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+
+            // Verificar se arquivo existe
+            if (!file_exists($absolutePath)) {
+                throw new \Exception("Arquivo não encontrado: {$absolutePath}");
+            }
+            
+            $progress = Cache::get("import_progress_{$this->importId}", []);
+            $progress['logs'][] = [
+                'time' => now()->format('H:i:s'),
+                'type' => 'info',
+                'message' => "Arquivo encontrado. Tamanho: " . filesize($absolutePath) . " bytes",
+            ];
+            Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+
+            // Criar instância do KMImport
+            $kmImport = new KMImport(
                 year: $this->year,
                 vehicleId: $this->vehicleId,
                 importId: $this->importId,
@@ -93,8 +115,48 @@ class ProcessImportJob implements ShouldQueue
                 userId: $this->userId
             );
 
-            // Processar importação
-            Excel::import($import, $absolutePath);
+            // Obter instância de SheetTripsImport (agora processamos diretamente sem WithMultipleSheets)
+            $import = $kmImport->getSheetImport();
+
+            // Atualizar progresso antes de processar
+            $progress = Cache::get("import_progress_{$this->importId}", []);
+            $progress['logs'][] = [
+                'time' => now()->format('H:i:s'),
+                'type' => 'info',
+                'message' => 'Iniciando leitura do arquivo Excel... (processamento direto)',
+            ];
+            Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+
+            // Processar importação com tratamento de erro detalhado
+            try {
+                $progress = Cache::get("import_progress_{$this->importId}", []);
+                $progress['logs'][] = [
+                    'time' => now()->format('H:i:s'),
+                    'type' => 'info',
+                    'message' => 'Chamando Excel::import() diretamente com SheetTripsImport...',
+                ];
+                Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+                
+                Excel::import($import, $absolutePath);
+                
+                // Atualizar progresso após processar
+                $progress = Cache::get("import_progress_{$this->importId}", []);
+                $progress['logs'][] = [
+                    'time' => now()->format('H:i:s'),
+                    'type' => 'info',
+                    'message' => 'Excel::import() concluído. Contando registros importados...',
+                ];
+                Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+            } catch (\Exception $e) {
+                $progress = Cache::get("import_progress_{$this->importId}", []);
+                $progress['logs'][] = [
+                    'time' => now()->format('H:i:s'),
+                    'type' => 'error',
+                    'message' => 'Erro ao processar Excel: ' . $e->getMessage() . ' | Linha: ' . $e->getLine() . ' | Arquivo: ' . basename($e->getFile()) . ' | Trace: ' . substr($e->getTraceAsString(), 0, 500),
+                ];
+                Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+                throw $e;
+            }
 
             // Contar linhas importadas
             $rowsImported = Trip::where('vehicle_id', $this->vehicleId)

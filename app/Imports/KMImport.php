@@ -2,9 +2,10 @@
 
 namespace App\Imports;
 
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+// Removido WithMultipleSheets - agora processamos diretamente com SheetTripsImport
+// Como há apenas uma aba, não precisamos de múltiplas abas
 
-class KMImport implements WithMultipleSheets
+class KMImport
 {
     protected $year;
     protected $vehicleId;
@@ -30,11 +31,12 @@ class KMImport implements WithMultipleSheets
     {
         return $this->importId;
     }
-
-    public function sheets(): array
+    
+    /**
+     * Retorna a instância de SheetTripsImport para processar a primeira aba
+     */
+    public function getSheetImport()
     {
-        $sheets = [];
-        
         // Garantir que userId esteja disponível
         if (!$this->userId) {
             // Tentar obter do cache
@@ -46,44 +48,9 @@ class KMImport implements WithMultipleSheets
             throw new \Exception('ID do usuário não está disponível no KMImport. importId=' . $this->importId);
         }
         
-        foreach ($this->sheetNames as $sheetName) {
-            // Verificar se a aba tem nome de mês válido antes de adicionar
-            $month = $this->detectMonth($sheetName);
-            if ($month) {
-                $sheets[$sheetName] = new SheetTripsImport($this->year, $this->vehicleId, $this->importId, $sheetName, $this->userId);
-            }
-        }
-        
-        return $sheets;
-    }
-
-    private function detectMonth($sheetName)
-    {
-        $sheetName = strtolower($sheetName);
-        $sheetName = \Illuminate\Support\Str::ascii($sheetName);
-
-        $months = [
-            'janeiro' => 1, 'jan' => 1,
-            'fevereiro' => 2, 'fev' => 2,
-            'marco' => 3, 'mar' => 3,
-            'abril' => 4, 'abr' => 4,
-            'maio' => 5, 'mai' => 5,
-            'junho' => 6, 'jun' => 6,
-            'julho' => 7, 'jul' => 7,
-            'agosto' => 8, 'ago' => 8,
-            'setembro' => 9, 'set' => 9,
-            'outubro' => 10, 'out' => 10,
-            'novembro' => 11, 'nov' => 11,
-            'dezembro' => 12, 'dez' => 12
-        ];
-
-        foreach ($months as $key => $value) {
-            if (str_contains($sheetName, $key)) {
-                return $value;
-            }
-        }
-
-        return null;
+        // NOVO FORMATO: Processar apenas a primeira aba (única aba com todos os dados)
+        $firstSheetName = !empty($this->sheetNames) ? $this->sheetNames[0] : 'Plan1';
+        return new SheetTripsImport($this->year, $this->vehicleId, $this->importId, $firstSheetName, $this->userId);
     }
 }
 
