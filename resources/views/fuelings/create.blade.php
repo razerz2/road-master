@@ -38,7 +38,14 @@
 
                             <div>
                                 <x-input-label for="fuel_type" :value="__('Tipo de Combustível')" />
-                                <x-text-input id="fuel_type" class="block mt-1 w-full" type="text" name="fuel_type" :value="old('fuel_type')" required />
+                                <select id="fuel_type" name="fuel_type" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm" required>
+                                    <option value="">Selecione...</option>
+                                    @foreach($fuelTypes as $fuelType)
+                                        <option value="{{ $fuelType->name }}" {{ old('fuel_type') == $fuelType->name ? 'selected' : '' }}>
+                                            {{ $fuelType->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 <x-input-error :messages="$errors->get('fuel_type')" class="mt-2" />
                             </div>
 

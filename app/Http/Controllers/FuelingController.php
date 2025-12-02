@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Fueling;
 use App\Models\Vehicle;
 use App\Models\PaymentMethod;
+use App\Models\FuelType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -45,8 +46,9 @@ class FuelingController extends Controller
 
         $vehicles = Vehicle::where('active', true)->get();
         $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
+        $fuelTypes = FuelType::where('active', true)->orderBy('order')->orderBy('name')->get();
 
-        return view('fuelings.create', compact('vehicles', 'paymentMethods'));
+        return view('fuelings.create', compact('vehicles', 'paymentMethods', 'fuelTypes'));
     }
 
     public function store(Request $request)
@@ -101,9 +103,10 @@ class FuelingController extends Controller
 
         $vehicles = Vehicle::where('active', true)->get();
         $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
+        $fuelTypes = FuelType::where('active', true)->orderBy('order')->orderBy('name')->get();
         $fueling->load('paymentMethod');
 
-        return view('fuelings.edit', compact('fueling', 'vehicles', 'paymentMethods'));
+        return view('fuelings.edit', compact('fueling', 'vehicles', 'paymentMethods', 'fuelTypes'));
     }
 
     public function update(Request $request, Fueling $fueling)

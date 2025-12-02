@@ -113,7 +113,18 @@
 
                             <div>
                                 <x-input-label for="odometer_start" :value="__('KM de Saída')" />
-                                <x-text-input id="odometer_start" class="block mt-1 w-full" type="number" name="odometer_start" :value="old('odometer_start', $trip->odometer_start)" required />
+                                <x-text-input 
+                                    id="odometer_start" 
+                                    class="block mt-1 w-full bg-gray-100 dark:bg-gray-700 cursor-not-allowed" 
+                                    type="number" 
+                                    name="odometer_start" 
+                                    :value="old('odometer_start', $trip->odometer_start)" 
+                                    required 
+                                    readonly
+                                />
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    O KM de Saída não pode ser alterado após o registro do percurso.
+                                </p>
                                 <x-input-error :messages="$errors->get('odometer_start')" class="mt-2" />
                             </div>
 
@@ -349,25 +360,8 @@
         });
         @endif
 
-        // Preencher KM de Saída automaticamente ao selecionar veículo
-        document.getElementById('vehicle_id').addEventListener('change', function() {
-            const vehicleId = this.value;
-            const odometerStartField = document.getElementById('odometer_start');
-            
-            if (vehicleId && !odometerStartField.value) {
-                // Buscar odômetro atual do veículo
-                fetch(`/trips/vehicle/${vehicleId}/odometer`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.current_odometer) {
-                            odometerStartField.value = data.current_odometer;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao buscar odômetro do veículo:', error);
-                    });
-            }
-        });
+        // Nota: O KM de Saída está bloqueado e não é atualizado quando o veículo é alterado na edição
+        // pois representa o valor histórico do percurso original
 
         function addStop() {
             const container = document.getElementById('stops-container');

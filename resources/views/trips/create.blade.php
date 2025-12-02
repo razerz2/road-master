@@ -113,7 +113,18 @@
 
                             <div>
                                 <x-input-label for="odometer_start" :value="__('KM de Saída')" />
-                                <x-text-input id="odometer_start" class="block mt-1 w-full" type="number" name="odometer_start" :value="old('odometer_start')" required />
+                                <x-text-input 
+                                    id="odometer_start" 
+                                    class="block mt-1 w-full bg-gray-100 dark:bg-gray-700 cursor-not-allowed" 
+                                    type="number" 
+                                    name="odometer_start" 
+                                    :value="old('odometer_start')" 
+                                    required 
+                                    readonly
+                                />
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    O KM de Saída é preenchido automaticamente com o odômetro atual do veículo selecionado.
+                                </p>
                                 <x-input-error :messages="$errors->get('odometer_start')" class="mt-2" />
                             </div>
 
@@ -325,18 +336,20 @@
             const vehicleId = this.value;
             const odometerStartField = document.getElementById('odometer_start');
             
-            if (vehicleId && !odometerStartField.value) {
+            if (vehicleId) {
                 // Buscar odômetro atual do veículo
                 fetch(`/trips/vehicle/${vehicleId}/odometer`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.current_odometer) {
+                        if (data.current_odometer !== undefined) {
                             odometerStartField.value = data.current_odometer;
                         }
                     })
                     .catch(error => {
                         console.error('Erro ao buscar odômetro do veículo:', error);
                     });
+            } else {
+                odometerStartField.value = '';
             }
         });
 

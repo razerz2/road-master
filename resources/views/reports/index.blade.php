@@ -32,7 +32,7 @@
                             <!-- Icon -->
                             <div class="mb-4">
                                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-r {{ $report['color'] }} text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $report['icon'] }}"/>
                                     </svg>
                                 </div>

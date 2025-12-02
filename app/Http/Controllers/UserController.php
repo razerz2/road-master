@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
@@ -211,14 +212,44 @@ class UserController extends Controller
             }
         }
 
-        $user->update([
+        // Impedir que admin desative sua própria conta ou mude seu próprio role
+        $currentUser = Auth::user();
+        $isCurrentUser = $user->id === $currentUser->id;
+        $isAdmin = $user->role === 'admin' || $validated['role'] === 'admin';
+        
+        // Impedir que admin mude seu próprio role para condutor
+        if ($isCurrentUser && $user->role === 'admin' && $validated['role'] === 'condutor') {
+            return redirect()->back()
+                ->with('error', 'Você não pode alterar seu próprio perfil de administrador para condutor.');
+        }
+        
+        // Impedir que admin desative sua própria conta
+        if ($isCurrentUser && $isAdmin && !$request->has('active')) {
+            return redirect()->back()
+                ->with('error', 'Você não pode desativar sua própria conta enquanto for administrador.');
+        }
+
+        $updateData = [
             'name' => $validated['name'],
             'name_full' => $validated['name_full'] ?? null,
             'email' => $validated['email'],
             'role' => $validated['role'],
-            'active' => $request->has('active'),
             'avatar' => $avatarPath,
-        ] + (isset($validated['password']) ? ['password' => $validated['password']] : []));
+        ];
+
+        // Apenas atualizar 'active' se não for o próprio admin tentando desativar
+        if (!($isCurrentUser && $isAdmin)) {
+            $updateData['active'] = $request->has('active');
+        } else {
+            // Forçar ativo para o próprio admin
+            $updateData['active'] = true;
+        }
+
+        if (isset($validated['password'])) {
+            $updateData['password'] = $validated['password'];
+        }
+
+        $user->update($updateData);
 
         // Remover todas as permissões existentes
         $user->modulePermissions()->delete();
@@ -253,6 +284,13 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         Gate::authorize('delete', $user);
+
+        // Impedir que admin exclua sua própria conta
+        $currentUser = Auth::user();
+        if ($user->id === $currentUser->id && $user->role === 'admin') {
+            return redirect()->route('users.index')
+                ->with('error', 'Você não pode excluir sua própria conta enquanto for administrador.');
+        }
 
         $user->delete();
 
