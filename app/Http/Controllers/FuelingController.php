@@ -1,0 +1,153 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Fueling;
+use App\Models\Vehicle;
+use App\Models\PaymentMethod;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+
+class FuelingController extends Controller
+{
+    public function index(Request $request)
+    {
+        Gate::authorize('viewAny', Fueling::class);
+
+        $query = Fueling::with(['vehicle', 'user']);
+
+        // Filtros
+        if ($request->filled('start_date')) {
+            $query->where('date_time', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->where('date_time', '<=', $request->end_date);
+        }
+        if ($request->filled('vehicle_id')) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        // Motorista só vê seus próprios abastecimentos
+        if (Auth::user()->role === 'motorista') {
+            $query->where('user_id', Auth::id());
+        }
+
+        $fuelings = $query->latest('date_time')->paginate(20);
+        $vehicles = Vehicle::where('active', true)->get();
+
+        return view('fuelings.index', compact('fuelings', 'vehicles'));
+    }
+
+    public function create()
+    {
+        Gate::authorize('create', Fueling::class);
+
+        $vehicles = Vehicle::where('active', true)->get();
+        $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
+
+        return view('fuelings.create', compact('vehicles', 'paymentMethods'));
+    }
+
+    public function store(Request $request)
+    {
+        Gate::authorize('create', Fueling::class);
+
+        $validated = $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'date_time' => 'required|date',
+            'odometer' => 'required|integer|min:0',
+            'fuel_type' => 'required|string|max:255',
+            'liters' => 'required|numeric|min:0',
+            'price_per_liter' => 'required|numeric|min:0',
+            'total_amount' => 'nullable|numeric|min:0',
+            'gas_station_name' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|max:255',
+            'payment_method_id' => 'nullable|exists:payment_methods,id',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Calcular total_amount se não informado
+        if (empty($validated['total_amount'])) {
+            $validated['total_amount'] = $validated['liters'] * $validated['price_per_liter'];
+        }
+
+        $validated['user_id'] = Auth::id();
+
+        $fueling = Fueling::create($validated);
+
+        // Atualizar odômetro do veículo se necessário
+        $vehicle = Vehicle::find($validated['vehicle_id']);
+        if ($vehicle && $validated['odometer'] > $vehicle->current_odometer) {
+            $vehicle->update(['current_odometer' => $validated['odometer']]);
+        }
+
+        return redirect()->route('fuelings.index')
+            ->with('success', 'Abastecimento registrado com sucesso!');
+    }
+
+    public function show(Fueling $fueling)
+    {
+        Gate::authorize('view', $fueling);
+
+        $fueling->load(['vehicle', 'user']);
+
+        return view('fuelings.show', compact('fueling'));
+    }
+
+    public function edit(Fueling $fueling)
+    {
+        Gate::authorize('update', $fueling);
+
+        $vehicles = Vehicle::where('active', true)->get();
+        $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
+        $fueling->load('paymentMethod');
+
+        return view('fuelings.edit', compact('fueling', 'vehicles', 'paymentMethods'));
+    }
+
+    public function update(Request $request, Fueling $fueling)
+    {
+        Gate::authorize('update', $fueling);
+
+        $validated = $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'date_time' => 'required|date',
+            'odometer' => 'required|integer|min:0',
+            'fuel_type' => 'required|string|max:255',
+            'liters' => 'required|numeric|min:0',
+            'price_per_liter' => 'required|numeric|min:0',
+            'total_amount' => 'nullable|numeric|min:0',
+            'gas_station_name' => 'nullable|string|max:255',
+            'payment_method' => 'nullable|string|max:255',
+            'payment_method_id' => 'nullable|exists:payment_methods,id',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Calcular total_amount se não informado
+        if (empty($validated['total_amount'])) {
+            $validated['total_amount'] = $validated['liters'] * $validated['price_per_liter'];
+        }
+
+        $fueling->update($validated);
+
+        // Atualizar odômetro do veículo se necessário
+        $vehicle = Vehicle::find($validated['vehicle_id']);
+        if ($vehicle && $validated['odometer'] > $vehicle->current_odometer) {
+            $vehicle->update(['current_odometer' => $validated['odometer']]);
+        }
+
+        return redirect()->route('fuelings.index')
+            ->with('success', 'Abastecimento atualizado com sucesso!');
+    }
+
+    public function destroy(Fueling $fueling)
+    {
+        Gate::authorize('delete', $fueling);
+
+        $fueling->delete();
+
+        return redirect()->route('fuelings.index')
+            ->with('success', 'Abastecimento removido com sucesso!');
+    }
+}

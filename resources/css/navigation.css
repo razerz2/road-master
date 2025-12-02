@@ -1,0 +1,30 @@
+/* CSS personalizado para corrigir espaçamento do menu de navegação */
+
+/* Remove qualquer padding ou margem esquerda do nav e seus containers */
+nav {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+nav > div {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* Ajusta o logo para ficar colado à esquerda com padding mínimo apenas no logo */
+.navigation-logo-wrapper {
+    padding-left: 0.5rem !important;
+}
+
+@media (min-width: 640px) {
+    .navigation-logo-wrapper {
+        padding-left: 1rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .navigation-logo-wrapper {
+        padding-left: 1.5rem !important;
+    }
+}
+
