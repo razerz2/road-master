@@ -47,6 +47,7 @@ class SettingsController extends Controller
         }
 
         $vehicles = Vehicle::orderBy('name')->get();
+        $modules = Module::where('slug', '!=', 'users')->orderBy('name')->get();
 
         // Carregar preferências do dashboard do usuário
         $user = Auth::user();
@@ -57,7 +58,19 @@ class SettingsController extends Controller
             'vehicle_id' => $userPreferences['dashboard_vehicle_id'] ?? null,
         ];
 
-        return view('settings.index', compact('settings', 'vehicles', 'dashboardPreferences'));
+        // Carregar módulos padrão para condutores
+        $defaultDriverModulesJson = SystemSetting::get('driver_default_modules', '[]');
+        $defaultDriverModulesData = json_decode($defaultDriverModulesJson, true) ?? [];
+        
+        $defaultDriverModules = [];
+        $defaultDriverModulePermissions = [];
+        
+        foreach ($defaultDriverModulesData as $moduleId => $permissions) {
+            $defaultDriverModules[] = $moduleId;
+            $defaultDriverModulePermissions[$moduleId] = $permissions;
+        }
+
+        return view('settings.index', compact('settings', 'vehicles', 'dashboardPreferences', 'modules', 'defaultDriverModules', 'defaultDriverModulePermissions'));
     }
 
     private function getSettingGroup($key)
@@ -270,6 +283,42 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.index')
             ->with('success', 'Preferências do dashboard salvas com sucesso!');
+    }
+
+    // ========== CONFIGURAÇÕES DE PERFIS ==========
+
+    public function updateDriverDefaultModules(Request $request)
+    {
+        Gate::authorize('viewAny', \App\Models\User::class);
+
+        $validated = $request->validate([
+            'modules' => 'nullable|array',
+            'modules.*.enabled' => 'boolean',
+            'modules.*.can_view' => 'boolean',
+            'modules.*.can_create' => 'boolean',
+            'modules.*.can_edit' => 'boolean',
+            'modules.*.can_delete' => 'boolean',
+        ]);
+
+        $defaultModules = [];
+        
+        if ($request->has('modules')) {
+            foreach ($request->input('modules', []) as $moduleId => $permissions) {
+                if (isset($permissions['enabled']) && $permissions['enabled']) {
+                    $defaultModules[$moduleId] = [
+                        'can_view' => isset($permissions['can_view']) && $permissions['can_view'],
+                        'can_create' => isset($permissions['can_create']) && $permissions['can_create'],
+                        'can_edit' => isset($permissions['can_edit']) && $permissions['can_edit'],
+                        'can_delete' => isset($permissions['can_delete']) && $permissions['can_delete'],
+                    ];
+                }
+            }
+        }
+
+        SystemSetting::set('driver_default_modules', json_encode($defaultModules), 'json', 'profiles', 'Módulos padrão para perfil de condutor');
+
+        return redirect()->route('settings.index', ['activeTab' => 'profiles'])
+            ->with('success', 'Módulos padrão para condutores atualizados com sucesso!');
     }
 }
 

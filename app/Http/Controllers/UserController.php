@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Module;
 use App\Models\Vehicle;
 use App\Models\UserModulePermission;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -30,7 +31,19 @@ class UserController extends Controller
         $modules = Module::where('slug', '!=', 'users')->orderBy('name')->get();
         $vehicles = Vehicle::where('active', true)->orderBy('name')->get();
 
-        return view('users.create', compact('modules', 'vehicles'));
+        // Carregar módulos padrão para condutores
+        $defaultDriverModulesJson = SystemSetting::get('driver_default_modules', '[]');
+        $defaultDriverModulesData = json_decode($defaultDriverModulesJson, true) ?? [];
+        
+        $defaultDriverModules = [];
+        $defaultDriverModulePermissions = [];
+        
+        foreach ($defaultDriverModulesData as $moduleId => $permissions) {
+            $defaultDriverModules[] = $moduleId;
+            $defaultDriverModulePermissions[$moduleId] = $permissions;
+        }
+
+        return view('users.create', compact('modules', 'vehicles', 'defaultDriverModules', 'defaultDriverModulePermissions'));
     }
 
     public function store(Request $request)

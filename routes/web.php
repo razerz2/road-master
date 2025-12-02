@@ -107,6 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::match(['put', 'post'], '/appearance', [SettingsController::class, 'updateAppearance'])->name('updateAppearance');
         Route::post('/appearance/reset', [SettingsController::class, 'resetAppearance'])->name('resetAppearance');
         Route::put('/dashboard-preferences', [SettingsController::class, 'updateDashboardPreferences'])->name('updateDashboardPreferences');
+        Route::put('/driver-default-modules', [SettingsController::class, 'updateDriverDefaultModules'])->name('updateDriverDefaultModules');
     });
 
     // Tipos de Combustível (apenas admin)

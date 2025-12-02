@@ -140,6 +140,11 @@
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Módulos de Acesso</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 @foreach($modules->where('slug', '!=', 'users') as $module)
+                                    @php
+                                        $isDefaultModule = in_array($module->id, $defaultDriverModules ?? []);
+                                        $defaultChecked = old("modules.{$module->id}.enabled", $isDefaultModule);
+                                        $defaultPermissions = $defaultDriverModulePermissions[$module->id] ?? [];
+                                    @endphp
                                     <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
                                         <div class="flex items-center mb-3">
                                             <input 
@@ -148,20 +153,20 @@
                                                 value="1" 
                                                 id="module_{{ $module->id }}"
                                                 class="module-checkbox rounded border-gray-300"
-                                                {{ old("modules.{$module->id}.enabled") ? 'checked' : '' }}
+                                                {{ $defaultChecked ? 'checked' : '' }}
                                             >
                                             <label for="module_{{ $module->id }}" class="ml-2 font-medium text-gray-900 dark:text-gray-100">
                                                 {{ $module->name }}
                                             </label>
                                         </div>
-                                        <div class="ml-6 grid grid-cols-2 gap-3 module-permissions" style="display: none;">
+                                        <div class="ml-6 grid grid-cols-2 gap-3 module-permissions" style="display: {{ $defaultChecked ? 'grid' : 'none' }};">
                                             <label class="flex items-center">
                                                 <input 
                                                     type="checkbox" 
                                                     name="modules[{{ $module->id }}][can_view]" 
                                                     value="1"
                                                     class="rounded border-gray-300"
-                                                    {{ old("modules.{$module->id}.can_view") ? 'checked' : '' }}
+                                                    {{ old("modules.{$module->id}.can_view", $defaultPermissions['can_view'] ?? false) ? 'checked' : '' }}
                                                 >
                                                 <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Visualizar</span>
                                             </label>
@@ -171,7 +176,7 @@
                                                     name="modules[{{ $module->id }}][can_create]" 
                                                     value="1"
                                                     class="rounded border-gray-300"
-                                                    {{ old("modules.{$module->id}.can_create") ? 'checked' : '' }}
+                                                    {{ old("modules.{$module->id}.can_create", $defaultPermissions['can_create'] ?? false) ? 'checked' : '' }}
                                                 >
                                                 <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Criar</span>
                                             </label>
@@ -181,7 +186,7 @@
                                                     name="modules[{{ $module->id }}][can_edit]" 
                                                     value="1"
                                                     class="rounded border-gray-300"
-                                                    {{ old("modules.{$module->id}.can_edit") ? 'checked' : '' }}
+                                                    {{ old("modules.{$module->id}.can_edit", $defaultPermissions['can_edit'] ?? false) ? 'checked' : '' }}
                                                 >
                                                 <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Editar</span>
                                             </label>
@@ -191,7 +196,7 @@
                                                     name="modules[{{ $module->id }}][can_delete]" 
                                                     value="1"
                                                     class="rounded border-gray-300"
-                                                    {{ old("modules.{$module->id}.can_delete") ? 'checked' : '' }}
+                                                    {{ old("modules.{$module->id}.can_delete", $defaultPermissions['can_delete'] ?? false) ? 'checked' : '' }}
                                                 >
                                                 <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Excluir</span>
                                             </label>
@@ -214,16 +219,68 @@
     </div>
 
     <script>
+        // Dados dos módulos padrão para condutores
+        const defaultDriverModules = @json($defaultDriverModules ?? []);
+        const defaultDriverModulePermissions = @json($defaultDriverModulePermissions ?? []);
+
         document.addEventListener('DOMContentLoaded', function() {
             const roleSelect = document.getElementById('role');
             const modulesSection = document.getElementById('modules-section');
+            
+            // Função para aplicar módulos padrão
+            function applyDefaultModules() {
+                if (roleSelect.value === 'condutor') {
+                    defaultDriverModules.forEach(moduleId => {
+                        const checkbox = document.getElementById('module_' + moduleId);
+                        const permissionsDiv = checkbox?.closest('.border')?.querySelector('.module-permissions');
+                        
+                        if (checkbox && !checkbox.checked) {
+                            checkbox.checked = true;
+                            if (permissionsDiv) {
+                                permissionsDiv.style.display = 'grid';
+                                
+                                // Aplicar permissões padrão
+                                const permissions = defaultDriverModulePermissions[moduleId] || {};
+                                const canView = permissionsDiv.querySelector(`input[name="modules[${moduleId}][can_view]"]`);
+                                const canCreate = permissionsDiv.querySelector(`input[name="modules[${moduleId}][can_create]"]`);
+                                const canEdit = permissionsDiv.querySelector(`input[name="modules[${moduleId}][can_edit]"]`);
+                                const canDelete = permissionsDiv.querySelector(`input[name="modules[${moduleId}][can_delete]"]`);
+                                
+                                if (canView) canView.checked = permissions.can_view || false;
+                                if (canCreate) canCreate.checked = permissions.can_create || false;
+                                if (canEdit) canEdit.checked = permissions.can_edit || false;
+                                if (canDelete) canDelete.checked = permissions.can_delete || false;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Função para limpar módulos quando mudar para admin
+            function clearModules() {
+                if (roleSelect.value === 'admin') {
+                    const moduleCheckboxes = document.querySelectorAll('.module-checkbox');
+                    moduleCheckboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                        const permissionsDiv = checkbox.closest('.border')?.querySelector('.module-permissions');
+                        if (permissionsDiv) {
+                            permissionsDiv.style.display = 'none';
+                            permissionsDiv.querySelectorAll('input[type="checkbox"]').forEach(perm => {
+                                perm.checked = false;
+                            });
+                        }
+                    });
+                }
+            }
             
             // Função para mostrar/ocultar módulos baseado no perfil
             function toggleModulesSection() {
                 if (roleSelect.value === 'admin') {
                     modulesSection.style.display = 'none';
+                    clearModules();
                 } else if (roleSelect.value === 'condutor') {
                     modulesSection.style.display = 'block';
+                    applyDefaultModules();
                 } else {
                     modulesSection.style.display = 'none';
                 }

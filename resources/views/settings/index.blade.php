@@ -63,6 +63,14 @@
                         >
                             Importação
                         </button>
+                        <button 
+                            type="button"
+                            @click="activeTab = 'profiles'"
+                            :class="activeTab === 'profiles' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
+                        >
+                            Perfis
+                        </button>
                     </nav>
                 </div>
 
@@ -443,6 +451,89 @@
                             </a>
                         </div>
                     </div>
+
+                    <!-- Tab: Perfis -->
+                    <div x-show="activeTab === 'profiles'" x-transition>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Configurações de Perfis</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                            Configure os módulos padrão que serão pré-selecionados ao criar um novo usuário com perfil de condutor.
+                        </p>
+                        
+                        <form method="POST" action="{{ route('settings.updateDriverDefaultModules') }}">
+                            @csrf
+                            @method('PUT')
+                            
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    @foreach($modules as $module)
+                                        <div class="border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                                            <div class="flex items-center mb-3">
+                                                <input 
+                                                    type="checkbox" 
+                                                    name="modules[{{ $module->id }}][enabled]" 
+                                                    value="1" 
+                                                    id="default_module_{{ $module->id }}"
+                                                    class="default-module-checkbox rounded border-gray-300"
+                                                    {{ in_array($module->id, $defaultDriverModules ?? []) ? 'checked' : '' }}
+                                                >
+                                                <label for="default_module_{{ $module->id }}" class="ml-2 font-medium text-gray-900 dark:text-gray-100">
+                                                    {{ $module->name }}
+                                                </label>
+                                            </div>
+                                            <div class="ml-6 grid grid-cols-2 gap-3 default-module-permissions" style="display: {{ in_array($module->id, $defaultDriverModules ?? []) ? 'grid' : 'none' }};">
+                                                <label class="flex items-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="modules[{{ $module->id }}][can_view]" 
+                                                        value="1"
+                                                        class="rounded border-gray-300"
+                                                        {{ isset($defaultDriverModulePermissions[$module->id]['can_view']) && $defaultDriverModulePermissions[$module->id]['can_view'] ? 'checked' : '' }}
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Visualizar</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="modules[{{ $module->id }}][can_create]" 
+                                                        value="1"
+                                                        class="rounded border-gray-300"
+                                                        {{ isset($defaultDriverModulePermissions[$module->id]['can_create']) && $defaultDriverModulePermissions[$module->id]['can_create'] ? 'checked' : '' }}
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Criar</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="modules[{{ $module->id }}][can_edit]" 
+                                                        value="1"
+                                                        class="rounded border-gray-300"
+                                                        {{ isset($defaultDriverModulePermissions[$module->id]['can_edit']) && $defaultDriverModulePermissions[$module->id]['can_edit'] ? 'checked' : '' }}
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Editar</span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        name="modules[{{ $module->id }}][can_delete]" 
+                                                        value="1"
+                                                        class="rounded border-gray-300"
+                                                        {{ isset($defaultDriverModulePermissions[$module->id]['can_delete']) && $defaultDriverModulePermissions[$module->id]['can_delete'] ? 'checked' : '' }}
+                                                    >
+                                                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Excluir</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="flex items-center justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
+                                    <x-primary-button>
+                                        {{ __('Salvar Configurações') }}
+                                    </x-primary-button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -454,5 +545,28 @@
                 document.getElementById('resetAppearanceForm').submit();
             }
         }
+
+        // Script para gerenciar checkboxes de módulos padrão
+        document.addEventListener('DOMContentLoaded', function() {
+            const defaultModuleCheckboxes = document.querySelectorAll('.default-module-checkbox');
+            
+            defaultModuleCheckboxes.forEach(checkbox => {
+                const permissionsDiv = checkbox.closest('.border').querySelector('.default-module-permissions');
+                
+                function togglePermissions() {
+                    if (checkbox.checked) {
+                        permissionsDiv.style.display = 'grid';
+                    } else {
+                        permissionsDiv.style.display = 'none';
+                        permissionsDiv.querySelectorAll('input[type="checkbox"]').forEach(perm => {
+                            perm.checked = false;
+                        });
+                    }
+                }
+                
+                togglePermissions();
+                checkbox.addEventListener('change', togglePermissions);
+            });
+        });
     </script>
 </x-app-layout>
