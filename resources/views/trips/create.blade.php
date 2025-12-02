@@ -24,16 +24,31 @@
                                 <x-input-error :messages="$errors->get('vehicle_id')" class="mt-2" />
                             </div>
 
+                            @if(auth()->user()->role === 'admin')
                             <div>
                                 <x-input-label for="driver_id" :value="__('Condutor')" />
-                                <select id="driver_id" name="driver_id" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm" required>
-                                    <option value="">Selecione...</option>
-                                    @foreach($drivers as $driver)
-                                        <option value="{{ $driver->id }}" {{ old('driver_id', auth()->id()) == $driver->id ? 'selected' : '' }}>{{ $driver->name }}</option>
-                                    @endforeach
-                                </select>
-                                <x-input-error :messages="$errors->get('driver_id')" class="mt-2" />
+                                <div class="flex items-end gap-2">
+                                    <div class="flex-1">
+                                        <select id="driver_id" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm bg-gray-100" required disabled>
+                                            @foreach($drivers as $driver)
+                                                <option value="{{ $driver->id }}" {{ old('driver_id', auth()->id()) == $driver->id ? 'selected' : '' }}>{{ $driver->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <input type="hidden" id="driver_id_hidden" name="driver_id" value="{{ old('driver_id', auth()->id()) }}">
+                                        <x-input-error :messages="$errors->get('driver_id')" class="mt-2" />
+                                    </div>
+                                    <button type="button" id="toggle_driver_select" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm whitespace-nowrap mb-1" title="Habilitar seleção de condutor">
+                                        <span id="toggle_driver_text">Habilitar</span>
+                                    </button>
+                                </div>
                             </div>
+                            @elseif(auth()->user()->role === 'condutor')
+                            {{-- Condutor sempre usa seu próprio ID, campo oculto --}}
+                            <input type="hidden" name="driver_id" value="{{ auth()->id() }}">
+                            @else
+                            {{-- Outros usuários também usam campo oculto --}}
+                            <input type="hidden" name="driver_id" value="{{ auth()->id() }}">
+                            @endif
 
                             <div>
                                 <x-input-label for="date" :value="__('Data')" />
@@ -261,6 +276,49 @@
         let stopIndex = 0;
         let currentSelectId = null;
         let sortableInstance = null;
+        let driverSelectEnabled = false;
+        const adminUserId = {{ auth()->id() }};
+        
+        // Controlar habilitação/desabilitação do campo de condutor para admin
+        @if(auth()->user()->role === 'admin')
+        document.addEventListener('DOMContentLoaded', function() {
+            const driverSelect = document.getElementById('driver_id');
+            const driverHidden = document.getElementById('driver_id_hidden');
+            const toggleButton = document.getElementById('toggle_driver_select');
+            const toggleText = document.getElementById('toggle_driver_text');
+            
+            if (driverSelect && toggleButton && driverHidden) {
+                // Sincronizar valor do select com o hidden quando mudar
+                driverSelect.addEventListener('change', function() {
+                    driverHidden.value = this.value;
+                });
+                
+                toggleButton.addEventListener('click', function() {
+                    driverSelectEnabled = !driverSelectEnabled;
+                    
+                    if (driverSelectEnabled) {
+                        // Habilitar campo
+                        driverSelect.disabled = false;
+                        driverSelect.classList.remove('bg-gray-100');
+                        driverSelect.classList.add('bg-white');
+                        toggleText.textContent = 'Desabilitar';
+                        toggleButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                        toggleButton.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                    } else {
+                        // Desabilitar campo e voltar para admin logado
+                        driverSelect.disabled = true;
+                        driverSelect.value = adminUserId;
+                        driverHidden.value = adminUserId;
+                        driverSelect.classList.remove('bg-white');
+                        driverSelect.classList.add('bg-gray-100');
+                        toggleText.textContent = 'Habilitar';
+                        toggleButton.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+                        toggleButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    }
+                });
+            }
+        });
+        @endif
 
         // Preencher KM de Saída automaticamente ao selecionar veículo
         document.getElementById('vehicle_id').addEventListener('change', function() {

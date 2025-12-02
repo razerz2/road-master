@@ -99,7 +99,7 @@
                                 <select id="role" name="role" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm" required>
                                     @php
                                         $currentRole = old('role', $user->role);
-                                        // Considerar 'motorista' e 'condutor' como equivalentes
+                                        // Considerar 'motorista' e 'condutor' como equivalentes (para compatibilidade com dados antigos)
                                         $isCondutor = ($currentRole === 'condutor' || $currentRole === 'motorista');
                                     @endphp
                                     <option value="condutor" {{ $isCondutor ? 'selected' : '' }}>Condutor</option>

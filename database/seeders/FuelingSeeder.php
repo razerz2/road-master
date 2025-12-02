@@ -21,7 +21,7 @@ class FuelingSeeder extends Seeder
     public function run(): void
     {
         $vehicles = Vehicle::all();
-        $drivers = User::where('role', 'motorista')->get();
+        $drivers = User::where('role', 'condutor')->get();
         $locations = Location::where('type', 'posto_combustivel')->get();
         $paymentMethods = PaymentMethod::where('active', true)->get();
         $fuelTypes = FuelType::where('active', true)->get();

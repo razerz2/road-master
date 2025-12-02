@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('fuel_type')->nullable(); // gasolina, etanol, diesel, flex
             $table->decimal('tank_capacity', 8, 2)->nullable();
             $table->integer('current_odometer')->default(0);
+            $table->integer('km_inicial')->nullable();
             $table->boolean('active')->default(true);
             $table->timestamps();
         });

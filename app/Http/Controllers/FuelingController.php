@@ -28,8 +28,8 @@ class FuelingController extends Controller
             $query->where('vehicle_id', $request->vehicle_id);
         }
 
-        // Motorista só vê seus próprios abastecimentos
-        if (Auth::user()->role === 'motorista') {
+        // Condutor só vê seus próprios abastecimentos
+        if (Auth::user()->role === 'condutor') {
             $query->where('user_id', Auth::id());
         }
 

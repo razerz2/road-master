@@ -17,12 +17,12 @@ class VehicleController extends Controller
         $user = Auth::user();
         
         if ($user->role === 'admin') {
-            $vehicles = Vehicle::orderBy('name')->get();
+            $vehicles = Vehicle::with('fuelTypes')->orderBy('name')->get();
         } elseif ($user->role === 'condutor') {
             // Condutor só vê veículos que tem relação
-            $vehicles = $user->vehicles()->orderBy('name')->get();
+            $vehicles = $user->vehicles()->with('fuelTypes')->orderBy('name')->get();
         } else {
-            $vehicles = Vehicle::orderBy('name')->get();
+            $vehicles = Vehicle::with('fuelTypes')->orderBy('name')->get();
         }
         
         return view('vehicles.index', compact('vehicles'));
@@ -45,18 +45,18 @@ class VehicleController extends Controller
             'brand' => 'nullable|string|max:255',
             'model' => 'nullable|string|max:255',
             'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
-            'fuel_type_ids' => 'nullable|array',
-            'fuel_type_ids.*' => 'exists:fuel_types,id',
+            'fuel_type_id' => 'nullable|exists:fuel_types,id',
             'tank_capacity' => 'nullable|numeric|min:0',
             'current_odometer' => 'nullable|integer|min:0',
             'active' => 'boolean',
         ]);
 
-        $fuelTypeIds = $validated['fuel_type_ids'] ?? [];
-        unset($validated['fuel_type_ids']);
+        $fuelTypeId = $validated['fuel_type_id'] ?? null;
+        unset($validated['fuel_type_id']);
 
         $vehicle = Vehicle::create($validated);
-        $vehicle->fuelTypes()->sync($fuelTypeIds);
+        // Sincronizar apenas o tipo selecionado (ou array vazio se nenhum foi selecionado)
+        $vehicle->fuelTypes()->sync($fuelTypeId ? [$fuelTypeId] : []);
 
         return redirect()->route('vehicles.index')
             ->with('success', 'Veículo cadastrado com sucesso!');
@@ -109,18 +109,18 @@ class VehicleController extends Controller
             'brand' => 'nullable|string|max:255',
             'model' => 'nullable|string|max:255',
             'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
-            'fuel_type_ids' => 'nullable|array',
-            'fuel_type_ids.*' => 'exists:fuel_types,id',
+            'fuel_type_id' => 'nullable|exists:fuel_types,id',
             'tank_capacity' => 'nullable|numeric|min:0',
             'current_odometer' => 'nullable|integer|min:0',
             'active' => 'boolean',
         ]);
 
-        $fuelTypeIds = $validated['fuel_type_ids'] ?? [];
-        unset($validated['fuel_type_ids']);
+        $fuelTypeId = $validated['fuel_type_id'] ?? null;
+        unset($validated['fuel_type_id']);
 
         $vehicle->update($validated);
-        $vehicle->fuelTypes()->sync($fuelTypeIds);
+        // Sincronizar apenas o tipo selecionado (ou array vazio se nenhum foi selecionado)
+        $vehicle->fuelTypes()->sync($fuelTypeId ? [$fuelTypeId] : []);
 
         return redirect()->route('vehicles.index')
             ->with('success', 'Veículo atualizado com sucesso!');

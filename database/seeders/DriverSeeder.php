@@ -29,7 +29,7 @@ class DriverSeeder extends Seeder
                 'name_full' => 'João da Silva Santos',
                 'email' => 'joao.silva@sckv.com',
                 'password' => 'joao123',
-                'role' => 'motorista',
+                'role' => 'condutor',
                 'active' => true,
                 'vehicle_ids' => [1, 2], // VW Gol e Toyota Corolla
             ],
@@ -38,7 +38,7 @@ class DriverSeeder extends Seeder
                 'name_full' => 'Maria de Oliveira Costa',
                 'email' => 'maria.oliveira@sckv.com',
                 'password' => 'maria123',
-                'role' => 'motorista',
+                'role' => 'condutor',
                 'active' => true,
                 'vehicle_ids' => [3, 4], // Ford Ranger e Chevrolet Onix
             ],
@@ -47,7 +47,7 @@ class DriverSeeder extends Seeder
                 'name_full' => 'Pedro Henrique Santos',
                 'email' => 'pedro.santos@sckv.com',
                 'password' => 'pedro123',
-                'role' => 'motorista',
+                'role' => 'condutor',
                 'active' => true,
                 'vehicle_ids' => [5, 6, 7], // Fiat Uno, Honda Civic e Renault Duster
             ],
@@ -56,7 +56,7 @@ class DriverSeeder extends Seeder
                 'name_full' => 'Ana Paula Costa Lima',
                 'email' => 'ana.costa@sckv.com',
                 'password' => 'ana123',
-                'role' => 'motorista',
+                'role' => 'condutor',
                 'active' => true,
                 'vehicle_ids' => [8], // Hyundai HB20
             ],

@@ -42,7 +42,7 @@ class UserController extends Controller
             'name_full' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|in:admin,motorista,condutor',
+            'role' => 'required|in:admin,condutor',
             'active' => 'boolean',
             'avatar' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
             'avatar_base64' => 'nullable|string',
@@ -76,21 +76,18 @@ class UserController extends Controller
             }
         }
 
-        // Converter 'condutor' para 'motorista' (padrão do enum)
-        $role = $validated['role'] === 'condutor' ? 'motorista' : $validated['role'];
-
         $user = User::create([
             'name' => $validated['name'],
             'name_full' => $validated['name_full'] ?? null,
             'email' => $validated['email'],
             'password' => $validated['password'],
-            'role' => $role,
+            'role' => $validated['role'],
             'active' => $request->has('active'),
             'avatar' => $avatarPath,
         ]);
 
         // Salvar permissões de módulos (apenas se não for admin)
-        if ($role !== 'admin' && $request->has('modules')) {
+        if ($validated['role'] !== 'admin' && $request->has('modules')) {
             foreach ($request->input('modules', []) as $moduleId => $permissions) {
                 if (isset($permissions['enabled']) && $permissions['enabled']) {
                     UserModulePermission::create([
@@ -148,7 +145,7 @@ class UserController extends Controller
             'name_full' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|in:admin,motorista,condutor',
+            'role' => 'required|in:admin,condutor',
             'active' => 'boolean',
             'avatar' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
             'avatar_base64' => 'nullable|string',
@@ -201,14 +198,11 @@ class UserController extends Controller
             }
         }
 
-        // Converter 'condutor' para 'motorista' (padrão do enum)
-        $role = $validated['role'] === 'condutor' ? 'motorista' : $validated['role'];
-
         $user->update([
             'name' => $validated['name'],
             'name_full' => $validated['name_full'] ?? null,
             'email' => $validated['email'],
-            'role' => $role,
+            'role' => $validated['role'],
             'active' => $request->has('active'),
             'avatar' => $avatarPath,
         ] + (isset($validated['password']) ? ['password' => $validated['password']] : []));
@@ -217,7 +211,7 @@ class UserController extends Controller
         $user->modulePermissions()->delete();
 
         // Salvar novas permissões de módulos (apenas se não for admin)
-        if ($role !== 'admin' && $request->has('modules')) {
+        if ($validated['role'] !== 'admin' && $request->has('modules')) {
             foreach ($request->input('modules', []) as $moduleId => $permissions) {
                 if (isset($permissions['enabled']) && $permissions['enabled']) {
                     UserModulePermission::create([

@@ -14,11 +14,14 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('name_full')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'motorista'])->default('motorista');
+            $table->string('avatar')->nullable();
+            $table->string('role')->default('condutor'); // SQLite não suporta enum, usar string
             $table->boolean('active')->default(true);
+            $table->json('preferences')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

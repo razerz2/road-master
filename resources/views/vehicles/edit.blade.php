@@ -45,18 +45,16 @@
                             </div>
 
                             <div>
-                                <x-input-label for="fuel_type_ids" :value="__('Tipos de Combustível')" />
-                                <select id="fuel_type_ids" name="fuel_type_ids[]" multiple class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm" size="4">
+                                <x-input-label for="fuel_type_id" :value="__('Tipo de Combustível')" />
+                                <select id="fuel_type_id" name="fuel_type_id" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm">
+                                    <option value="">Selecione...</option>
                                     @foreach($fuelTypes as $fuelType)
-                                        <option value="{{ $fuelType->id }}" {{ in_array($fuelType->id, old('fuel_type_ids', $vehicle->fuelTypes->pluck('id')->toArray())) ? 'selected' : '' }}>
+                                        <option value="{{ $fuelType->id }}" {{ old('fuel_type_id', $vehicle->fuelTypes->first()?->id) == $fuelType->id ? 'selected' : '' }}>
                                             {{ $fuelType->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <x-input-error :messages="$errors->get('fuel_type_ids')" class="mt-2" />
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    Segure Ctrl (ou Cmd no Mac) para selecionar múltiplos tipos.
-                                </p>
+                                <x-input-error :messages="$errors->get('fuel_type_id')" class="mt-2" />
                             </div>
 
                             <div>

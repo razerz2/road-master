@@ -19,7 +19,7 @@ class TripSeeder extends Seeder
     {
         // Buscar dados
         $vehicles = Vehicle::all();
-        $drivers = User::where('role', 'motorista')->get();
+        $drivers = User::where('role', 'condutor')->get();
         $locations = Location::all();
         $admin = User::where('role', 'admin')->first();
 

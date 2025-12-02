@@ -64,7 +64,9 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-semibold text-gray-900 dark:text-gray-100 font-mono">{{ $vehicle->plate }}</div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{{ $vehicle->fuel_type ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                            {{ $vehicle->fuelTypes->first()?->name ?? '-' }}
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ number_format($vehicle->current_odometer, 0, ',', '.') }} <span class="text-gray-500 dark:text-gray-400">km</span></div>
                                         </td>
