@@ -21,7 +21,8 @@
                                 @endforeach
                             @endif
                             → {{ $trip->destinationLocation->name }}
-                            @if($trip->return_to_origin)
+                            @if($trip->return_to_origin && $trip->origin_location_id !== $trip->destination_location_id)
+                                {{-- Se retornou à origem mas destino é diferente (último local antes de retornar), mostrar origem no final --}}
                                 → {{ $trip->originLocation->name }}
                             @endif
                         </div>

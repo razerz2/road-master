@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\Trip;
 use App\Models\TripStop;
 use App\Models\Vehicle;
+use App\Models\Fueling;
+use App\Models\Location;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +24,7 @@ class ResetTripsAndOdometer extends Command
      *
      * @var string
      */
-    protected $description = 'Apaga todos os registros de percursos e redefine o KM dos veículos para o km_inicial';
+    protected $description = 'Apaga todos os registros de percursos, abastecimentos, locais da importação e redefine o KM dos veículos para o km_inicial';
 
     /**
      * Execute the console command.
@@ -30,7 +32,7 @@ class ResetTripsAndOdometer extends Command
     public function handle()
     {
         if (!$this->option('force')) {
-            if (!$this->confirm('⚠️  ATENÇÃO: Esta ação irá apagar TODOS os percursos e redefinir o KM de TODOS os veículos. Deseja continuar?')) {
+            if (!$this->confirm('⚠️  ATENÇÃO: Esta ação irá apagar TODOS os percursos, abastecimentos, locais criados pela importação e redefinir o KM de TODOS os veículos. Deseja continuar?')) {
                 $this->info('Operação cancelada.');
                 return Command::FAILURE;
             }
@@ -40,9 +42,10 @@ class ResetTripsAndOdometer extends Command
 
         try {
             DB::transaction(function () {
-                // Contar percursos antes de deletar
+                // Contar registros antes de deletar
                 $tripsCount = Trip::count();
                 $tripStopsCount = TripStop::count();
+                $fuelingsCount = Fueling::count();
 
                 // Apagar todas as paradas intermediárias
                 $this->info('Apagando paradas intermediárias...');
@@ -53,6 +56,29 @@ class ResetTripsAndOdometer extends Command
                 $this->info('Apagando percursos...');
                 Trip::truncate();
                 $this->info("✓ {$tripsCount} percurso(s) apagado(s)");
+
+                // Apagar todos os abastecimentos
+                $this->info('Apagando abastecimentos...');
+                Fueling::truncate();
+                $this->info("✓ {$fuelingsCount} abastecimento(s) apagado(s)");
+
+                // Apagar locais criados pela importação
+                // Locais da importação são aqueles que não têm location_type_id definido
+                // e não têm endereço completo (apenas nome)
+                $this->info('Apagando locais criados pela importação...');
+                $locationsToDelete = Location::whereNull('location_type_id')
+                    ->where(function($query) {
+                        $query->whereNull('address')
+                            ->orWhere('address', '');
+                    })
+                    ->where(function($query) {
+                        $query->whereNull('city')
+                            ->orWhere('city', '');
+                    });
+                
+                $locationsCount = $locationsToDelete->count();
+                $locationsToDelete->delete();
+                $this->info("✓ {$locationsCount} local(is) da importação apagado(s)");
 
                 // Redefinir KM dos veículos para km_inicial
                 $this->info('Redefinindo KM dos veículos...');
@@ -71,7 +97,7 @@ class ResetTripsAndOdometer extends Command
 
             $this->newLine();
             $this->info('✅ Reset concluído com sucesso!');
-            $this->info('Todos os percursos foram apagados e os odômetros dos veículos foram redefinidos para o km_inicial.');
+            $this->info('Todos os percursos, abastecimentos e locais da importação foram apagados e os odômetros dos veículos foram redefinidos para o km_inicial.');
 
             return Command::SUCCESS;
         } catch (\Exception $e) {

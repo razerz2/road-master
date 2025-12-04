@@ -83,8 +83,8 @@ class SheetTripsImport implements ToModel, WithChunkReading, WithEvents, SkipsEm
      * Padroniza o nome de um local para evitar duplicidades
      * - Trim
      * - Remover espaços duplos
-     * - ucwords(strtolower())
-     * - Remover acentos
+     * - ucwords(strtolower()) preservando caracteres especiais
+     * - Normalizar acentos apenas para comparação (não remover)
      */
     private function normalizeLocationName($name)
     {
@@ -99,12 +99,79 @@ class SheetTripsImport implements ToModel, WithChunkReading, WithEvents, SkipsEm
         $name = preg_replace('/\s+/', ' ', $name);
 
         // Converter para lowercase e depois ucwords
-        $name = ucwords(strtolower($name));
+        // Usar mb_convert_case para preservar caracteres especiais
+        $name = mb_convert_case($name, MB_CASE_TITLE, 'UTF-8');
 
-        // Remover acentos
-        $name = Str::ascii($name);
+        // Não remover acentos - manter caracteres especiais originais
+        // A normalização serve apenas para padronizar espaços e capitalização
 
         return $name;
+    }
+
+    /**
+     * Remove acentos de uma string para comparação
+     * Usado para comparar nomes ignorando diferenças de acentuação
+     */
+    private function removeAccents($string)
+    {
+        if (empty($string)) {
+            return '';
+        }
+        
+        // Tabela de mapeamento de caracteres acentuados para sem acento
+        $accents = [
+            'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A',
+            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a',
+            'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E',
+            'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I',
+            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
+            'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O',
+            'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
+            'Ù' => 'U', 'Ú' => 'U', 'Û' => 'U', 'Ü' => 'U',
+            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
+            'Ç' => 'C', 'ç' => 'c',
+            'Ñ' => 'N', 'ñ' => 'n',
+            'Ý' => 'Y', 'ý' => 'y', 'ÿ' => 'y',
+        ];
+        
+        return strtr($string, $accents);
+    }
+
+    /**
+     * Busca ou cria um local considerando acentos como equivalentes
+     * Ex: "Júlio" e "Julio" serão considerados o mesmo local
+     */
+    private function findOrCreateLocationByName($name)
+    {
+        if (empty($name)) {
+            return null;
+        }
+
+        // Normalizar o nome (preservando caracteres para exibição)
+        $normalizedName = $this->normalizeLocationName($name);
+        
+        if (!$normalizedName) {
+            return null;
+        }
+
+        // Criar versão sem acentos para comparação
+        $nameWithoutAccents = $this->removeAccents(strtolower(trim($normalizedName)));
+
+        // Buscar todos os locais e comparar ignorando acentos
+        $allLocations = Location::all();
+        
+        foreach ($allLocations as $location) {
+            $locationNameWithoutAccents = $this->removeAccents(strtolower(trim($location->name)));
+            
+            // Se os nomes sem acentos forem iguais, retornar o local existente
+            if ($locationNameWithoutAccents === $nameWithoutAccents) {
+                return $location;
+            }
+        }
+
+        // Se não encontrou, criar novo local com o nome normalizado (preservando caracteres)
+        return Location::create(['name' => $normalizedName]);
     }
 
     /**
@@ -334,9 +401,23 @@ class SheetTripsImport implements ToModel, WithChunkReading, WithEvents, SkipsEm
             }
 
             // Validar condutor (motorista)
-            $driver = User::where('name', $condutor)->first();
+            // Normalizar nome da planilha para formato esperado (primeira letra maiúscula)
+            // Ex: "RAFAEL FLORES" -> "Rafael Flores", "rafael flores" -> "Rafael Flores"
+            $condutorTrimmed = trim($condutor);
+            $normalizedCondutor = ucwords(strtolower($condutorTrimmed));
+            
+            // Buscar por nome normalizado primeiro (formato padrão: primeira letra maiúscula)
+            $driver = User::where('name', $normalizedCondutor)->first();
+            
+            // Se não encontrar, tentar busca case-insensitive como fallback
+            // Isso garante que encontre mesmo se houver diferenças de capitalização
             if (!$driver) {
-                $this->updateProgress('error', "Linha {$this->processedRows}: Motorista '{$condutor}' não encontrado. Pulando linha...");
+                // Usar whereRaw para busca case-insensitive compatível com SQLite, MySQL e PostgreSQL
+                $driver = User::whereRaw('LOWER(TRIM(name)) = ?', [strtolower($condutorTrimmed)])->first();
+            }
+            
+            if (!$driver) {
+                $this->updateProgress('error', "Linha {$this->processedRows}: Motorista '{$condutor}' não encontrado. Pulando linha... (Tentou buscar como '{$normalizedCondutor}')");
                 return null;
             }
 
@@ -354,6 +435,7 @@ class SheetTripsImport implements ToModel, WithChunkReading, WithEvents, SkipsEm
             $origin = null;
             $destination = null;
             $intermediateLocations = [];
+            $returnToOrigin = false;
 
             if (count($locationParts) === 1) {
                 // Se itinerário tiver apenas 1 item → origem = destino
@@ -362,8 +444,9 @@ class SheetTripsImport implements ToModel, WithChunkReading, WithEvents, SkipsEm
                     $this->updateProgress('warning', "Linha {$this->processedRows}: Nome de local inválido após normalização.");
                     return null;
                 }
-                $origin = Location::firstOrCreate(['name' => $locationName]);
+                $origin = $this->findOrCreateLocationByName($locationName);
                 $destination = $origin;
+                $returnToOrigin = true; // Origem = destino, retornou
             } else {
                 // Primeiro item → origin_location_id
                 $originName = $this->normalizeLocationName($locationParts[0]);
@@ -371,23 +454,65 @@ class SheetTripsImport implements ToModel, WithChunkReading, WithEvents, SkipsEm
                     $this->updateProgress('warning', "Linha {$this->processedRows}: Nome de origem inválido após normalização.");
                     return null;
                 }
-                $origin = Location::firstOrCreate(['name' => $originName]);
+                $origin = $this->findOrCreateLocationByName($originName);
 
-                // Último item → destination_location_id
-                $destinationName = $this->normalizeLocationName(end($locationParts));
-                if (!$destinationName) {
+                // Último item do itinerário
+                $lastItemName = $this->normalizeLocationName(end($locationParts));
+                if (!$lastItemName) {
                     $this->updateProgress('warning', "Linha {$this->processedRows}: Nome de destino inválido após normalização.");
                     return null;
                 }
-                $destination = Location::firstOrCreate(['name' => $destinationName]);
+                $lastLocation = $this->findOrCreateLocationByName($lastItemName);
+
+                // Verificar se o último local é igual ao primeiro (retornou para o local de partida)
+                if ($origin->id === $lastLocation->id) {
+                    // Se retornou à origem, encontrar o último local DIFERENTE da origem como destino
+                    $returnToOrigin = true;
+                    
+                    // Percorrer do último para o primeiro para encontrar o último local diferente da origem
+                    $realDestination = null;
+                    for ($i = count($locationParts) - 1; $i >= 0; $i--) {
+                        $locationName = $this->normalizeLocationName($locationParts[$i]);
+                        if ($locationName) {
+                            $candidateLocation = $this->findOrCreateLocationByName($locationName);
+                            if ($candidateLocation->id !== $origin->id) {
+                                $realDestination = $candidateLocation;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Se não encontrou nenhum local diferente, usar a origem como destino
+                    $destination = $realDestination ?? $origin;
+                } else {
+                    // Último local é diferente da origem - destino normal
+                    $destination = $lastLocation;
+                }
 
                 // Itens intermediários → criar registros em trip_stops
+                // Não criar paradas intermediárias que sejam iguais à origem ou destino final
                 if (count($locationParts) > 2) {
                     // Do segundo até o penúltimo
                     for ($i = 1; $i < count($locationParts) - 1; $i++) {
                         $locationName = $this->normalizeLocationName($locationParts[$i]);
                         if ($locationName) {
-                            $intermediateLocations[] = Location::firstOrCreate(['name' => $locationName]);
+                            $intermediateLocation = $this->findOrCreateLocationByName($locationName);
+                            
+                            // Não adicionar se for igual à origem ou destino final
+                            if ($intermediateLocation->id !== $origin->id && $intermediateLocation->id !== $destination->id) {
+                                // Evitar duplicatas - não adicionar se já existe na lista
+                                $alreadyAdded = false;
+                                foreach ($intermediateLocations as $existing) {
+                                    if ($existing->id === $intermediateLocation->id) {
+                                        $alreadyAdded = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (!$alreadyAdded) {
+                                    $intermediateLocations[] = $intermediateLocation;
+                                }
+                            }
                         }
                     }
                 }
@@ -436,7 +561,7 @@ class SheetTripsImport implements ToModel, WithChunkReading, WithEvents, SkipsEm
                 'odometer_start' => $odometerStart,
                 'odometer_end' => $odometerEnd,
                 'km_total' => $odometerEnd - $odometerStart,
-                'return_to_origin' => false,
+                'return_to_origin' => $returnToOrigin,
                 'created_by' => $userId,
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -43,17 +43,34 @@ class ProcessImportJob implements ShouldQueue
      */
     public function handle(): void
     {
+        \Log::info('ProcessImportJob iniciado', [
+            'import_id' => $this->importId,
+            'file_path' => $this->filePath,
+            'user_id' => $this->userId,
+        ]);
+        
         try {
+            // Log inicial
+            $progress = Cache::get("import_progress_{$this->importId}", []);
+            $progress['logs'][] = [
+                'time' => now()->format('H:i:s'),
+                'type' => 'info',
+                'message' => '[JOB] ProcessImportJob.handle() iniciado',
+            ];
+            Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+            
             // Validar userId
             if (!$this->userId) {
                 $errorMsg = 'ID do usuário não fornecido. Não é possível processar a importação.';
+                \Log::error('ProcessImportJob: userId não fornecido', ['import_id' => $this->importId]);
+                
                 $progress = Cache::get("import_progress_{$this->importId}", []);
                 $progress['status'] = 'error';
                 $progress['error'] = $errorMsg;
                 $progress['logs'][] = [
                     'time' => now()->format('H:i:s'),
                     'type' => 'error',
-                    'message' => $errorMsg,
+                    'message' => '[JOB] ' . $errorMsg,
                 ];
                 Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
                 throw new \Exception($errorMsg);
@@ -65,7 +82,7 @@ class ProcessImportJob implements ShouldQueue
             $progress['logs'][] = [
                 'time' => now()->format('H:i:s'),
                 'type' => 'info',
-                'message' => 'Iniciando processamento da importação... (Usuário ID: ' . $this->userId . ')',
+                'message' => '[JOB] Iniciando processamento da importação... (Usuário ID: ' . $this->userId . ')',
             ];
             Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
 
@@ -129,14 +146,24 @@ class ProcessImportJob implements ShouldQueue
 
             // Processar importação com tratamento de erro detalhado
             try {
+                // Obter o nome da aba a ser processada
+                $sheetName = !empty($this->sheetNames) ? $this->sheetNames[0] : null;
+                
                 $progress = Cache::get("import_progress_{$this->importId}", []);
                 $progress['logs'][] = [
                     'time' => now()->format('H:i:s'),
                     'type' => 'info',
-                    'message' => 'Chamando Excel::import() diretamente com SheetTripsImport...',
+                    'message' => 'Chamando Excel::import() diretamente com SheetTripsImport...' . ($sheetName ? " (Aba: {$sheetName})" : ' (primeira aba)'),
                 ];
                 Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
                 
+                // Validar que o arquivo existe e pode ser lido
+                if (!is_readable($absolutePath)) {
+                    throw new \Exception("Arquivo não pode ser lido: {$absolutePath}");
+                }
+                
+                // Processar importação - o Excel::import() processa a primeira aba por padrão
+                // Com WithStartRow, ele começará da linha 2 (pulando cabeçalho)
                 Excel::import($import, $absolutePath);
                 
                 // Atualizar progresso após processar
@@ -147,13 +174,28 @@ class ProcessImportJob implements ShouldQueue
                     'message' => 'Excel::import() concluído. Contando registros importados...',
                 ];
                 Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
-            } catch (\Exception $e) {
+            } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
                 $progress = Cache::get("import_progress_{$this->importId}", []);
+                $errorMsg = 'Erro ao ler arquivo Excel: ' . $e->getMessage() . '. Verifique se o arquivo está no formato correto (.xlsx ou .xls) e não está corrompido.';
                 $progress['logs'][] = [
                     'time' => now()->format('H:i:s'),
                     'type' => 'error',
-                    'message' => 'Erro ao processar Excel: ' . $e->getMessage() . ' | Linha: ' . $e->getLine() . ' | Arquivo: ' . basename($e->getFile()) . ' | Trace: ' . substr($e->getTraceAsString(), 0, 500),
+                    'message' => $errorMsg,
                 ];
+                $progress['status'] = 'error';
+                $progress['error'] = $errorMsg;
+                Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
+                throw new \Exception($errorMsg, 0, $e);
+            } catch (\Exception $e) {
+                $progress = Cache::get("import_progress_{$this->importId}", []);
+                $errorMsg = 'Erro ao processar Excel: ' . $e->getMessage() . ' | Linha: ' . $e->getLine() . ' | Arquivo: ' . basename($e->getFile());
+                $progress['logs'][] = [
+                    'time' => now()->format('H:i:s'),
+                    'type' => 'error',
+                    'message' => $errorMsg . ' | Trace: ' . substr($e->getTraceAsString(), 0, 500),
+                ];
+                $progress['status'] = 'error';
+                $progress['error'] = $errorMsg;
                 Cache::put("import_progress_{$this->importId}", $progress, now()->addHours(1));
                 throw $e;
             }

@@ -80,9 +80,23 @@ class ImportController extends Controller
                 'sheet_names' => $sheetNames,
             ], now()->addHours(1));
 
-            // Processar síncrono por padrão (garante que funcione sem worker)
-            // Para produção, configure QUEUE_CONNECTION=sync no .env ou tenha um worker rodando
-            $processSync = env('QUEUE_CONNECTION', 'sync') === 'sync' || $request->has('sync');
+            // SEMPRE processar síncrono por padrão (garante que funcione sem worker)
+            // Para processar assíncrono, você precisa:
+            // 1. Ter um worker rodando: php artisan queue:work
+            // 2. Passar ?async=1 na URL da requisição
+            $queueConnection = env('QUEUE_CONNECTION', 'sync');
+            
+            // Por padrão, sempre processar síncrono para garantir funcionamento
+            // Só processa assíncrono se explicitamente solicitado via ?async=1
+            $processSync = !$request->has('async');
+            
+            $progress = Cache::get("import_progress_{$importId}", []);
+            $progress['logs'][] = [
+                'time' => now()->format('H:i:s'),
+                'type' => 'info',
+                'message' => "Configuração da fila: {$queueConnection} | Processamento: " . ($processSync ? 'Síncrono' : 'Assíncrono'),
+            ];
+            Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
             
             if ($processSync) {
                 // Processar imediatamente (síncrono) - útil para debug
@@ -95,6 +109,14 @@ class ImportController extends Controller
                 Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
                 
                 try {
+                    $progress = Cache::get("import_progress_{$importId}", []);
+                    $progress['logs'][] = [
+                        'time' => now()->format('H:i:s'),
+                        'type' => 'info',
+                        'message' => 'Criando instância do Job de processamento...',
+                    ];
+                    Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
+                    
                     $job = new ProcessImportJob(
                         $filePath,
                         $file->getClientOriginalName(),
@@ -104,20 +126,51 @@ class ImportController extends Controller
                         $sheetNames,
                         $userId
                     );
+                    
+                    $progress = Cache::get("import_progress_{$importId}", []);
+                    $progress['logs'][] = [
+                        'time' => now()->format('H:i:s'),
+                        'type' => 'info',
+                        'message' => 'Job criado. Iniciando processamento...',
+                    ];
+                    Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
+                    
                     $job->handle();
+                    
+                    $progress = Cache::get("import_progress_{$importId}", []);
+                    $progress['logs'][] = [
+                        'time' => now()->format('H:i:s'),
+                        'type' => 'info',
+                        'message' => 'Job concluído com sucesso.',
+                    ];
+                    Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
                 } catch (\Exception $e) {
+                    \Log::error('Erro ao processar importação síncrona', [
+                        'import_id' => $importId,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    
                     $progress = Cache::get("import_progress_{$importId}", []);
                     $progress['status'] = 'error';
                     $progress['error'] = $e->getMessage();
                     $progress['logs'][] = [
                         'time' => now()->format('H:i:s'),
                         'type' => 'error',
-                        'message' => 'Erro na importação: ' . $e->getMessage(),
+                        'message' => 'Erro na importação: ' . $e->getMessage() . ' | Linha: ' . $e->getLine() . ' | Arquivo: ' . basename($e->getFile()),
                     ];
                     Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
                 }
             } else {
                 // Disparar Job para processar importação em background
+                $progress = Cache::get("import_progress_{$importId}", []);
+                $progress['logs'][] = [
+                    'time' => now()->format('H:i:s'),
+                    'type' => 'info',
+                    'message' => 'Enfileirando Job para processamento assíncrono...',
+                ];
+                Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
+                
                 ProcessImportJob::dispatch(
                     $filePath,
                     $file->getClientOriginalName(),
@@ -127,6 +180,14 @@ class ImportController extends Controller
                     $sheetNames,
                     $userId
                 );
+                
+                $progress = Cache::get("import_progress_{$importId}", []);
+                $progress['logs'][] = [
+                    'time' => now()->format('H:i:s'),
+                    'type' => 'info',
+                    'message' => 'Job enfileirado. Aguardando processamento...',
+                ];
+                Cache::put("import_progress_{$importId}", $progress, now()->addHours(1));
             }
 
             // Redirecionar imediatamente para a página de progresso
