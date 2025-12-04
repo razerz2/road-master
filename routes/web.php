@@ -81,6 +81,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Importação
     Route::get('/importacao', [ImportController::class, 'index'])->name('import.index');
     Route::post('/importacao', [ImportController::class, 'import'])->name('import.process');
+    Route::get('/importacao/exportar', [ImportController::class, 'export'])->name('import.export');
     Route::get('/importacao/progresso/{id}', [ImportController::class, 'progress'])->name('import.progress');
     Route::get('/importacao/status/{id}', [ImportController::class, 'status'])->name('import.status');
 

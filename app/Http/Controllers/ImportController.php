@@ -9,6 +9,7 @@ use App\Jobs\ProcessImportJob;
 use App\Models\ImportLog;
 use App\Models\Trip;
 use App\Models\Vehicle;
+use App\Exports\TripsExport;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -235,6 +236,42 @@ class ImportController extends Controller
         }
 
         return response()->json($progress);
+    }
+
+    public function export(Request $request)
+    {
+        try {
+            $request->validate([
+                'year' => 'required|integer|min:2000|max:2100',
+                'vehicle_id' => 'required|exists:vehicles,id',
+            ]);
+
+            $vehicle = Vehicle::findOrFail($request->vehicle_id);
+            $year = $request->year;
+
+            // Verificar se há viagens para exportar
+            $tripsCount = Trip::where('vehicle_id', $request->vehicle_id)
+                ->whereYear('date', $year)
+                ->count();
+
+            if ($tripsCount === 0) {
+                return redirect()->route('settings.index', ['activeTab' => 'import'])
+                    ->with('error', "Nenhuma viagem encontrada para o veículo {$vehicle->name} no ano {$year}.");
+            }
+
+            // Nome do arquivo: baseado no veículo e ano (mesmo formato da importação)
+            $vehicleName = \Illuminate\Support\Str::slug($vehicle->name);
+            $filename = "CKM - {$vehicleName} - {$year}";
+
+            // Exportar usando a classe TripsExport
+            return Excel::download(
+                new TripsExport($request->vehicle_id, $year),
+                $filename . '.xlsx'
+            );
+        } catch (\Exception $e) {
+            return redirect()->route('settings.index', ['activeTab' => 'import'])
+                ->with('error', 'Erro ao exportar planilha: ' . $e->getMessage());
+        }
     }
 }
 

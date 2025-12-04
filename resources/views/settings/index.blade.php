@@ -65,6 +65,14 @@
                         </button>
                         <button 
                             type="button"
+                            @click="activeTab = 'export'"
+                            :class="activeTab === 'export' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
+                        >
+                            Exportação
+                        </button>
+                        <button 
+                            type="button"
                             @click="activeTab = 'profiles'"
                             :class="activeTab === 'profiles' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
                             class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
@@ -345,6 +353,12 @@
                             </div>
                         @endif
 
+                        @if(session('error'))
+                            <div class="mb-4 p-4 bg-red-100 dark:bg-red-800 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 rounded">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
                         @if($errors->any())
 <div class="mb-4 p-4 bg-red-100 dark:bg-red-800 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 rounded">
                                 <ul class="list-disc list-inside">
@@ -387,6 +401,78 @@
                             <div class="flex items-center justify-end mt-6">
                                 <x-primary-button>
                                     {{ __('Importar Dados') }}
+                                </x-primary-button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab: Exportação -->
+                    <div x-show="activeTab === 'export'" x-transition>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Exportação de Planilhas de KM</h3>
+                        
+                        @if(session('success'))
+                            <div class="mb-4 p-4 bg-green-100 dark:bg-green-800 border border-green-400 dark:border-green-600 text-green-700 dark:text-green-300 rounded">
+                                {{ session('success') }}
+                            </div>
+                        @endif
+
+                        @if(session('error'))
+                            <div class="mb-4 p-4 bg-red-100 dark:bg-red-800 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 rounded">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
+                        @if($errors->any())
+                            <div class="mb-4 p-4 bg-red-100 dark:bg-red-800 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 rounded">
+                                <ul class="list-disc list-inside">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <!-- Informações sobre a exportação -->
+                        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 mb-6">
+                            <h4 class="text-lg font-semibold text-green-900 dark:text-green-100 mb-3">
+                                📤 Exportar Dados
+                            </h4>
+                            <div class="text-sm text-green-800 dark:text-green-200 space-y-2">
+                                <p>
+                                    Exporte os percursos cadastrados no sistema em formato Excel, seguindo exatamente a mesma estrutura da planilha de importação.
+                                </p>
+                                <p class="font-medium">
+                                    A planilha exportada pode ser reimportada no sistema mantendo total compatibilidade.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Formulário de Exportação -->
+                        <form action="{{ route('import.export') }}" method="GET">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <x-input-label for="export_year" :value="__('Ano da planilha')" />
+                                    <x-text-input id="export_year" class="block mt-1 w-full" type="number" name="year" :value="old('export_year', date('Y'))" min="2000" max="2100" required />
+                                    <x-input-error :messages="$errors->get('year')" class="mt-2" />
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Ano dos percursos que deseja exportar</p>
+                                </div>
+
+                                <div>
+                                    <x-input-label for="export_vehicle_id" :value="__('Veículo')" />
+                                    <select id="export_vehicle_id" name="vehicle_id" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm" required>
+                                        <option value="">Selecione...</option>
+                                        @foreach($vehicles as $v)
+                                            <option value="{{ $v->id }}" {{ old('export_vehicle_id') == $v->id ? 'selected' : '' }}>{{ $v->name }} - {{ $v->plate }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('vehicle_id')" class="mt-2" />
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Veículo cujos percursos serão exportados</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end mt-6">
+                                <x-primary-button type="submit" class="bg-green-600 hover:bg-green-700">
+                                    {{ __('Exportar Planilha') }}
                                 </x-primary-button>
                             </div>
                         </form>
