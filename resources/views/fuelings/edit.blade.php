@@ -70,7 +70,7 @@
                             <div>
                                 <x-input-label for="gas_station_id" :value="__('Posto')" />
                                 <select id="gas_station_id" name="gas_station_id" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm">
-                                    <option value="">Selecione um posto ou digite abaixo</option>
+                                    <option value="">Selecione um posto</option>
                                     @foreach($gasStations as $gasStation)
                                         <option value="{{ $gasStation->id }}" {{ old('gas_station_id', $fueling->gas_station_id) == $gasStation->id ? 'selected' : '' }}>
                                             {{ $gasStation->name }}
@@ -78,9 +78,6 @@
                                     @endforeach
                                 </select>
                                 <x-input-error :messages="$errors->get('gas_station_id')" class="mt-2" />
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Ou digite um posto personalizado:</p>
-                                <x-text-input id="gas_station_name" class="block mt-1 w-full" type="text" name="gas_station_name" :value="old('gas_station_name', $fueling->gas_station_name)" placeholder="Nome do posto (se não estiver na lista)" />
-                                <x-input-error :messages="$errors->get('gas_station_name')" class="mt-2" />
                             </div>
 
                             <div>
