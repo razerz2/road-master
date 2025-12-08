@@ -59,7 +59,19 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($result['total_km'], 0, ',', '.') }} km</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $result['trip_count'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($result['total_liters'], 2, ',', '.') }} L</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $result['avg_consumption'] > 0 ? number_format($result['avg_consumption'], 2, ',', '.') . ' km/L' : '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                            @php
+                                                $consumption = $result['real_consumption'] ?? $result['period_consumption'];
+                                            @endphp
+                                            @if($consumption)
+                                                {{ number_format($consumption, 2, ',', '.') }} km/L
+                                                @if($result['real_consumption'])
+                                                    <span class="text-xs text-green-600 dark:text-green-400" title="Consumo real calculado por ciclos completos">*</span>
+                                                @endif
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">R$ {{ number_format($result['total_fuel_cost'], 2, ',', '.') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $result['maintenance_count'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">R$ {{ number_format($result['total_maintenance_cost'], 2, ',', '.') }}</td>

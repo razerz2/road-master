@@ -13,7 +13,7 @@ class MaintenanceTypeController extends Controller
     {
         Gate::authorize('viewAny', \App\Models\User::class); // Apenas admin pode acessar
         
-        $maintenanceTypes = MaintenanceType::orderBy('order')->orderBy('name')->get();
+        $maintenanceTypes = MaintenanceType::orderBy('order')->orderBy('name')->paginate(20);
         
         $maintenanceType = null;
         $editingId = null;

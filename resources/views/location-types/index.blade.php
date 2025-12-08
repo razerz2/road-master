@@ -114,6 +114,11 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if($locationTypes->hasPages())
+                            <div class="mt-4">
+                                {{ $locationTypes->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

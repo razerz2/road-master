@@ -13,7 +13,7 @@ class FuelTypeController extends Controller
     {
         Gate::authorize('viewAny', \App\Models\User::class); // Apenas admin pode acessar
         
-        $fuelTypes = FuelType::orderBy('order')->orderBy('name')->get();
+        $fuelTypes = FuelType::orderBy('order')->orderBy('name')->paginate(20);
         
         $fuelType = null;
         $editingId = null;

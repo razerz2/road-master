@@ -114,6 +114,11 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if($fuelTypes->hasPages())
+                            <div class="mt-4">
+                                {{ $fuelTypes->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

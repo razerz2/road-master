@@ -114,6 +114,11 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if($maintenanceTypes->hasPages())
+                            <div class="mt-4">
+                                {{ $maintenanceTypes->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

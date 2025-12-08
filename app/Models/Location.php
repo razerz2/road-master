@@ -33,6 +33,11 @@ class Location extends Model
         return $this->hasMany(Trip::class, 'destination_location_id');
     }
 
+    public function tripStops(): HasMany
+    {
+        return $this->hasMany(TripStop::class);
+    }
+
     public function locationType(): BelongsTo
     {
         return $this->belongsTo(LocationType::class);

@@ -135,6 +135,11 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($vehicles->hasPages())
+                        <div class="mt-6 px-6 pb-6">
+                            {{ $vehicles->links() }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

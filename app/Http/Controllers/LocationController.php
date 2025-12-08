@@ -6,12 +6,13 @@ use App\Models\Location;
 use App\Models\LocationType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 class LocationController extends Controller
 {
     public function index()
     {
-        $locations = Location::orderBy('name')->get();
+        $locations = Location::orderBy('name')->paginate(20);
         return view('locations.index', compact('locations'));
     }
 
@@ -123,9 +124,54 @@ class LocationController extends Controller
 
     public function destroy(Location $location)
     {
-        $location->delete();
+        try {
+            // Verificar se existem viagens que usam este local como origem
+            $originTripsCount = $location->originTrips()->count();
+            
+            // Verificar se existem viagens que usam este local como destino
+            $destinationTripsCount = $location->destinationTrips()->count();
+            
+            // Verificar se existem paradas intermediárias que usam este local
+            $tripStopsCount = $location->tripStops()->count();
+            
+            // Se existir qualquer dependência, impedir a exclusão
+            if ($originTripsCount > 0 || $destinationTripsCount > 0 || $tripStopsCount > 0) {
+                $totalUsages = $originTripsCount + $destinationTripsCount + $tripStopsCount;
+                
+                $message = "Não é possível excluir este local pois ele está sendo utilizado em ";
+                
+                $usageDetails = [];
+                if ($originTripsCount > 0) {
+                    $usageDetails[] = "{$originTripsCount} viagem(ns) como origem";
+                }
+                if ($destinationTripsCount > 0) {
+                    $usageDetails[] = "{$destinationTripsCount} viagem(ns) como destino";
+                }
+                if ($tripStopsCount > 0) {
+                    $usageDetails[] = "{$tripStopsCount} parada(s) intermediária(s)";
+                }
+                
+                $message .= implode(", ", $usageDetails) . ".";
+                
+                return redirect()->route('locations.index')
+                    ->with('error', $message);
+            }
+            
+            // Se não houver dependências, permitir a exclusão
+            $location->delete();
 
-        return redirect()->route('locations.index')
-            ->with('success', 'Local removido com sucesso!');
+            return redirect()->route('locations.index')
+                ->with('success', 'Local removido com sucesso!');
+                
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Capturar erro de integridade referencial caso ainda ocorra
+            if ($e->getCode() == '23000') {
+                return redirect()->route('locations.index')
+                    ->with('error', 'Não é possível excluir este local pois ele está sendo utilizado em outras partes do sistema.');
+            }
+            
+            // Re-lançar exceção se for outro tipo de erro
+            throw $e;
+        }
     }
 }

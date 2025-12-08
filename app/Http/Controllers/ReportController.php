@@ -146,20 +146,16 @@ class ReportController extends Controller
                 ->whereBetween('date', [$startDate, $endDate])
                 ->get();
 
-            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date_time', [$startDate, $endDate])
-                ->get();
-
-            $totalKm = $trips->sum('km_total');
-            $totalLiters = $fuelings->sum('liters');
-            $avgConsumption = $totalLiters > 0 ? round($totalKm / $totalLiters, 2) : 0;
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
 
             $results[] = [
                 'vehicle' => $vehicle,
-                'total_km' => $totalKm,
+                'total_km' => $consumptionData['total_km'],
                 'trip_count' => $trips->count(),
-                'total_liters' => $totalLiters,
-                'avg_consumption' => $avgConsumption,
+                'total_liters' => $consumptionData['total_liters'],
+                'real_consumption' => $consumptionData['real_consumption'],
+                'period_consumption' => $consumptionData['period_consumption'],
+                'full_count' => $consumptionData['full_count'],
             ];
         }
 
@@ -228,24 +224,16 @@ class ReportController extends Controller
                 continue;
             }
 
-            $trips = Trip::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
 
-            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date_time', [$startDate, $endDate])
-                ->get();
-
-            $totalKm = $trips->sum('km_total');
-            $totalLiters = $fuelings->sum('liters');
-            $avgConsumption = $totalLiters > 0 ? round($totalKm / $totalLiters, 2) : 0;
-
-            if ($totalKm > 0 || $totalLiters > 0) {
+            if ($consumptionData['total_km'] > 0 || $consumptionData['total_liters'] > 0) {
                 $results[] = [
                     'vehicle' => $vehicle,
-                    'total_km' => $totalKm,
-                    'total_liters' => $totalLiters,
-                    'avg_consumption' => $avgConsumption,
+                    'total_km' => $consumptionData['total_km'],
+                    'total_liters' => $consumptionData['total_liters'],
+                    'real_consumption' => $consumptionData['real_consumption'],
+                    'period_consumption' => $consumptionData['period_consumption'],
+                    'full_count' => $consumptionData['full_count'],
                 ];
             }
         }
@@ -655,19 +643,19 @@ class ReportController extends Controller
                 ->whereBetween('date', [$startDate, $endDate])
                 ->get();
 
-            $totalKm = $trips->sum('km_total');
-            $totalLiters = $fuelings->sum('liters');
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
             $totalFuelCost = $fuelings->sum('total_amount');
             $totalMaintenanceCost = $maintenances->sum('cost');
-            $avgConsumption = $totalLiters > 0 ? round($totalKm / $totalLiters, 2) : 0;
             $tco = $totalFuelCost + $totalMaintenanceCost;
 
             $results[] = [
                 'vehicle' => $vehicle,
-                'total_km' => $totalKm,
+                'total_km' => $consumptionData['total_km'],
                 'trip_count' => $trips->count(),
-                'total_liters' => $totalLiters,
-                'avg_consumption' => $avgConsumption,
+                'total_liters' => $consumptionData['total_liters'],
+                'real_consumption' => $consumptionData['real_consumption'],
+                'period_consumption' => $consumptionData['period_consumption'],
+                'full_count' => $consumptionData['full_count'],
                 'total_fuel_cost' => $totalFuelCost,
                 'maintenance_count' => $maintenances->count(),
                 'total_maintenance_cost' => $totalMaintenanceCost,
@@ -791,20 +779,17 @@ class ReportController extends Controller
                 ->whereBetween('date', [$startDate, $endDate])
                 ->get();
 
-            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date_time', [$startDate, $endDate])
-                ->get();
-
-            $totalKm = $trips->sum('km_total');
-            $totalLiters = $fuelings->sum('liters');
-            $avgConsumption = $totalLiters > 0 ? round($totalKm / $totalLiters, 2) : 0;
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
+            
+            // Usar consumo real se disponível, senão usar consumo por período
+            $consumption = $consumptionData['real_consumption'] ?? $consumptionData['period_consumption'];
 
             $data[] = [
                 'Veículo' => $vehicle->name,
-                'KM Total' => number_format($totalKm, 0, ',', '.') . ' km',
+                'KM Total' => number_format($consumptionData['total_km'], 0, ',', '.') . ' km',
                 'Quantidade de Percursos' => $trips->count(),
-                'Litros Abastecidos' => number_format($totalLiters, 2, ',', '.') . ' L',
-                'Consumo Médio (km/L)' => $avgConsumption > 0 ? number_format($avgConsumption, 2, ',', '.') : '-',
+                'Litros Abastecidos' => number_format($consumptionData['total_liters'], 2, ',', '.') . ' L',
+                'Consumo Médio (km/L)' => $consumption ? number_format($consumption, 2, ',', '.') : '-',
             ];
         }
 
@@ -831,20 +816,17 @@ class ReportController extends Controller
                 ->whereBetween('date', [$startDate, $endDate])
                 ->get();
 
-            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date_time', [$startDate, $endDate])
-                ->get();
-
-            $totalKm = $trips->sum('km_total');
-            $totalLiters = $fuelings->sum('liters');
-            $avgConsumption = $totalLiters > 0 ? round($totalKm / $totalLiters, 2) : 0;
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
+            
+            // Usar consumo real se disponível, senão usar consumo por período
+            $consumption = $consumptionData['real_consumption'] ?? $consumptionData['period_consumption'];
 
             $data[] = [
                 'Veículo' => $vehicle->name,
-                'KM Total' => number_format($totalKm, 0, ',', '.') . ' km',
+                'KM Total' => number_format($consumptionData['total_km'], 0, ',', '.') . ' km',
                 'Quantidade de Percursos' => $trips->count(),
-                'Litros Abastecidos' => number_format($totalLiters, 2, ',', '.') . ' L',
-                'Consumo Médio (km/L)' => $avgConsumption > 0 ? number_format($avgConsumption, 2, ',', '.') : '-',
+                'Litros Abastecidos' => number_format($consumptionData['total_liters'], 2, ',', '.') . ' L',
+                'Consumo Médio (km/L)' => $consumption ? number_format($consumption, 2, ',', '.') : '-',
             ];
         }
 
@@ -874,24 +856,17 @@ class ReportController extends Controller
                 continue;
             }
 
-            $trips = Trip::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
+            
+            // Usar consumo real se disponível, senão usar consumo por período
+            $consumption = $consumptionData['real_consumption'] ?? $consumptionData['period_consumption'];
 
-            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date_time', [$startDate, $endDate])
-                ->get();
-
-            $totalKm = $trips->sum('km_total');
-            $totalLiters = $fuelings->sum('liters');
-            $avgConsumption = $totalLiters > 0 ? round($totalKm / $totalLiters, 2) : 0;
-
-            if ($totalKm > 0 || $totalLiters > 0) {
+            if ($consumptionData['total_km'] > 0 || $consumptionData['total_liters'] > 0) {
                 $data[] = [
                     'Veículo' => $vehicle->name,
-                    'KM Rodado' => number_format($totalKm, 0, ',', '.') . ' km',
-                    'Litros Abastecidos' => number_format($totalLiters, 2, ',', '.') . ' L',
-                    'Consumo Médio (km/L)' => number_format($avgConsumption, 2, ',', '.'),
+                    'KM Rodado' => number_format($consumptionData['total_km'], 0, ',', '.') . ' km',
+                    'Litros Abastecidos' => number_format($consumptionData['total_liters'], 2, ',', '.') . ' L',
+                    'Consumo Médio (km/L)' => $consumption ? number_format($consumption, 2, ',', '.') : '-',
                 ];
             }
         }
@@ -920,24 +895,17 @@ class ReportController extends Controller
                 continue;
             }
 
-            $trips = Trip::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
+            
+            // Usar consumo real se disponível, senão usar consumo por período
+            $consumption = $consumptionData['real_consumption'] ?? $consumptionData['period_consumption'];
 
-            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
-                ->whereBetween('date_time', [$startDate, $endDate])
-                ->get();
-
-            $totalKm = $trips->sum('km_total');
-            $totalLiters = $fuelings->sum('liters');
-            $avgConsumption = $totalLiters > 0 ? round($totalKm / $totalLiters, 2) : 0;
-
-            if ($totalKm > 0 || $totalLiters > 0) {
+            if ($consumptionData['total_km'] > 0 || $consumptionData['total_liters'] > 0) {
                 $data[] = [
                     'Veículo' => $vehicle->name,
-                    'KM Rodado' => number_format($totalKm, 0, ',', '.') . ' km',
-                    'Litros Abastecidos' => number_format($totalLiters, 2, ',', '.') . ' L',
-                    'Consumo Médio (km/L)' => number_format($avgConsumption, 2, ',', '.'),
+                    'KM Rodado' => number_format($consumptionData['total_km'], 0, ',', '.') . ' km',
+                    'Litros Abastecidos' => number_format($consumptionData['total_liters'], 2, ',', '.') . ' L',
+                    'Consumo Médio (km/L)' => $consumption ? number_format($consumption, 2, ',', '.') : '-',
                 ];
             }
         }

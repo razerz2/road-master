@@ -20,7 +20,7 @@ class UserController extends Controller
     {
         Gate::authorize('viewAny', User::class);
 
-        $users = User::orderBy('name')->get();
+        $users = User::orderBy('name')->paginate(20);
 
         return view('users.index', compact('users'));
     }

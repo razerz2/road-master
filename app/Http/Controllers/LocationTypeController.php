@@ -13,7 +13,7 @@ class LocationTypeController extends Controller
     {
         Gate::authorize('viewAny', \App\Models\User::class); // Apenas admin pode acessar
         
-        $locationTypes = LocationType::orderBy('order')->orderBy('name')->get();
+        $locationTypes = LocationType::orderBy('order')->orderBy('name')->paginate(20);
         
         $locationType = null;
         $editingId = null;

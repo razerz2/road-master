@@ -114,6 +114,11 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if($paymentMethods->hasPages())
+                            <div class="mt-4">
+                                {{ $paymentMethods->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -17,12 +17,12 @@ class VehicleController extends Controller
         $user = Auth::user();
         
         if ($user->role === 'admin') {
-            $vehicles = Vehicle::with('fuelTypes')->orderBy('name')->get();
+            $vehicles = Vehicle::with('fuelTypes')->orderBy('name')->paginate(20);
         } elseif ($user->role === 'condutor') {
             // Condutor só vê veículos que tem relação
-            $vehicles = $user->vehicles()->with('fuelTypes')->orderBy('name')->get();
+            $vehicles = $user->vehicles()->with('fuelTypes')->orderBy('name')->paginate(20);
         } else {
-            $vehicles = Vehicle::with('fuelTypes')->orderBy('name')->get();
+            $vehicles = Vehicle::with('fuelTypes')->orderBy('name')->paginate(20);
         }
         
         return view('vehicles.index', compact('vehicles'));

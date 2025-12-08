@@ -13,7 +13,7 @@ class PaymentMethodController extends Controller
     {
         Gate::authorize('viewAny', \App\Models\User::class); // Apenas admin pode acessar
         
-        $paymentMethods = PaymentMethod::orderBy('order')->orderBy('name')->get();
+        $paymentMethods = PaymentMethod::orderBy('order')->orderBy('name')->paginate(20);
         
         $paymentMethod = null;
         $editingId = null;

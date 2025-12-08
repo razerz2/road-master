@@ -38,17 +38,29 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">KM Total</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Quantidade de Percursos</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Litros Abastecidos</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Consumo Médio (km/L)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Consumo (km/L)</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @forelse($results as $result)
+                                    @php
+                                        $consumption = $result['real_consumption'] ?? $result['period_consumption'];
+                                    @endphp
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $result['vehicle']->name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($result['total_km'], 0, ',', '.') }} km</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $result['trip_count'] }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($result['total_liters'], 2, ',', '.') }} L</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $result['avg_consumption'] > 0 ? number_format($result['avg_consumption'], 2, ',', '.') : '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                            @if($consumption)
+                                                {{ number_format($consumption, 2, ',', '.') }}
+                                                @if($result['real_consumption'])
+                                                    <span class="text-xs text-green-600 dark:text-green-400" title="Consumo real calculado por ciclos completos">*</span>
+                                                @endif
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>

@@ -108,6 +108,11 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($users->hasPages())
+                        <div class="mt-4 px-6 pb-6">
+                            {{ $users->links() }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
