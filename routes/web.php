@@ -54,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Usuários (apenas admin)
     Route::resource('users', UserController::class);
+    Route::get('/users/{user}/change-password', [UserController::class, 'changePassword'])->name('users.change-password');
+    Route::put('/users/{user}/change-password', [UserController::class, 'updatePassword'])->name('users.update-password');
 
     // Relatórios
     Route::prefix('reports')->name('reports.')->group(function () {

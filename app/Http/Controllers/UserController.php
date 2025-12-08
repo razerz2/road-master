@@ -158,7 +158,6 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'name_full' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed',
             'role' => 'required|in:admin,condutor',
             'active' => 'boolean',
             'avatar' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
@@ -172,12 +171,6 @@ class UserController extends Controller
             'vehicles' => 'nullable|array',
             'vehicles.*' => 'exists:vehicles,id',
         ]);
-
-        if (!empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
 
         // Processar avatar
         $avatarPath = $user->avatar;
@@ -245,10 +238,6 @@ class UserController extends Controller
             $updateData['active'] = true;
         }
 
-        if (isset($validated['password'])) {
-            $updateData['password'] = $validated['password'];
-        }
-
         $user->update($updateData);
 
         // Remover todas as permissões existentes
@@ -279,6 +268,29 @@ class UserController extends Controller
 
         return redirect()->route('users.index')
             ->with('success', 'Usuário atualizado com sucesso!');
+    }
+
+    public function changePassword(User $user)
+    {
+        Gate::authorize('update', $user);
+
+        return view('users.change-password', compact('user'));
+    }
+
+    public function updatePassword(Request $request, User $user)
+    {
+        Gate::authorize('update', $user);
+
+        $validated = $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return redirect()->route('users.index')
+            ->with('success', 'Senha alterada com sucesso!');
     }
 
     public function destroy(User $user)
