@@ -630,6 +630,22 @@
                                     Gerencie os tipos de local disponíveis.
                                 </p>
                             </a>
+
+                            <!-- Postos de Combustível -->
+                            <a 
+                                href="{{ route('gas-stations.index') }}"
+                                class="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                            >
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Postos de Combustível</h4>
+                                    <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    Gerencie os postos de combustível cadastrados.
+                                </p>
+                            </a>
                         </div>
                     </div>
 

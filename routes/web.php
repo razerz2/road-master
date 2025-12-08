@@ -166,6 +166,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{locationType}', [\App\Http\Controllers\LocationTypeController::class, 'update'])->name('update');
         Route::delete('/{locationType}', [\App\Http\Controllers\LocationTypeController::class, 'destroy'])->name('destroy');
     });
+
+    // Postos de Combustível (apenas admin)
+    Route::prefix('gas-stations')->name('gas-stations.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GasStationController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\GasStationController::class, 'store'])->name('store');
+        Route::put('/{gasStation}', [\App\Http\Controllers\GasStationController::class, 'update'])->name('update');
+        Route::delete('/{gasStation}', [\App\Http\Controllers\GasStationController::class, 'destroy'])->name('destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             PaymentMethodSeeder::class,
             MaintenanceTypeSeeder::class,
             LocationTypeSeeder::class,
+            GasStationSeeder::class,
         ]);
 
         // Criar usuário admin

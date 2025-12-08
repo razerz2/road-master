@@ -6,6 +6,7 @@ use App\Models\Fueling;
 use App\Models\Vehicle;
 use App\Models\PaymentMethod;
 use App\Models\FuelType;
+use App\Models\GasStation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -47,8 +48,9 @@ class FuelingController extends Controller
         $vehicles = Vehicle::where('active', true)->get();
         $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
         $fuelTypes = FuelType::where('active', true)->orderBy('order')->orderBy('name')->get();
+        $gasStations = GasStation::where('active', true)->orderBy('order')->orderBy('name')->get();
 
-        return view('fuelings.create', compact('vehicles', 'paymentMethods', 'fuelTypes'));
+        return view('fuelings.create', compact('vehicles', 'paymentMethods', 'fuelTypes', 'gasStations'));
     }
 
     public function store(Request $request)
@@ -64,6 +66,7 @@ class FuelingController extends Controller
             'price_per_liter' => 'required|numeric|min:0',
             'total_amount' => 'nullable|numeric|min:0',
             'gas_station_name' => 'nullable|string|max:255',
+            'gas_station_id' => 'nullable|exists:gas_stations,id',
             'payment_method' => 'nullable|string|max:255',
             'payment_method_id' => 'nullable|exists:payment_methods,id',
             'notes' => 'nullable|string',
@@ -104,9 +107,10 @@ class FuelingController extends Controller
         $vehicles = Vehicle::where('active', true)->get();
         $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
         $fuelTypes = FuelType::where('active', true)->orderBy('order')->orderBy('name')->get();
-        $fueling->load('paymentMethod');
+        $gasStations = GasStation::where('active', true)->orderBy('order')->orderBy('name')->get();
+        $fueling->load('paymentMethod', 'gasStation');
 
-        return view('fuelings.edit', compact('fueling', 'vehicles', 'paymentMethods', 'fuelTypes'));
+        return view('fuelings.edit', compact('fueling', 'vehicles', 'paymentMethods', 'fuelTypes', 'gasStations'));
     }
 
     public function update(Request $request, Fueling $fueling)
@@ -122,6 +126,7 @@ class FuelingController extends Controller
             'price_per_liter' => 'required|numeric|min:0',
             'total_amount' => 'nullable|numeric|min:0',
             'gas_station_name' => 'nullable|string|max:255',
+            'gas_station_id' => 'nullable|exists:gas_stations,id',
             'payment_method' => 'nullable|string|max:255',
             'payment_method_id' => 'nullable|exists:payment_methods,id',
             'notes' => 'nullable|string',

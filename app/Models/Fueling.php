@@ -17,6 +17,7 @@ class Fueling extends Model
         'price_per_liter',
         'total_amount',
         'gas_station_name',
+        'gas_station_id',
         'payment_method',
         'payment_method_id',
         'notes',
@@ -46,6 +47,11 @@ class Fueling extends Model
     public function paymentMethod(): BelongsTo
     {
         return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function gasStation(): BelongsTo
+    {
+        return $this->belongsTo(GasStation::class);
     }
 
     /**

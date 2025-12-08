@@ -133,6 +133,9 @@ class AppServiceProvider extends ServiceProvider
             
             // Tipos de Local
             'location-types.index' => 'Tipos de Local',
+            
+            // Postos de Combustível
+            'gas-stations.index' => 'Postos de Combustível',
         ];
 
         // Verificar se a rota exata existe no mapa
