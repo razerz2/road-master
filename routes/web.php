@@ -13,6 +13,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReviewNotificationController;
+use App\Http\Controllers\MandatoryEventController;
 use App\Http\Controllers\StorageController;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +52,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Notificações de Revisão
     Route::resource('review-notifications', ReviewNotificationController::class);
     Route::post('/review-notifications/{reviewNotification}/toggle-active', [ReviewNotificationController::class, 'toggleActive'])->name('review-notifications.toggle-active');
+
+    // Obrigações Legais (IPVA, Licenciamento, Multas)
+    Route::resource('mandatory-events', MandatoryEventController::class);
+    Route::post('mandatory-events/{mandatoryEvent}/resolve', [MandatoryEventController::class, 'markResolved'])->name('mandatory-events.resolve');
 
     // Usuários (apenas admin)
     Route::resource('users', UserController::class);

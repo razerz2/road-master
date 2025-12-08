@@ -56,6 +56,11 @@ class Vehicle extends Model
         return $this->hasMany(ReviewNotification::class);
     }
 
+    public function mandatoryEvents(): HasMany
+    {
+        return $this->hasMany(VehicleMandatoryEvent::class);
+    }
+
     public function fuelTypes(): BelongsToMany
     {
         return $this->belongsToMany(FuelType::class, 'vehicle_fuel_type');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Trip;
 use App\Models\Vehicle;
 use App\Models\Fueling;
+use App\Models\VehicleMandatoryEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -93,6 +94,34 @@ class DashboardController extends Controller
             $vehicles = Vehicle::where('active', true)->get();
         }
 
+        // Obrigações legais próximas do vencimento
+        $nextEventsQuery = VehicleMandatoryEvent::where('resolved', false)
+            ->whereDate('due_date', '<=', now()->addDays(15))
+            ->with('vehicle')
+            ->orderBy('due_date');
+
+        // Filtrar por veículos do condutor se necessário
+        if ($user->role === 'condutor') {
+            $userVehicleIds = $user->vehicles()->pluck('vehicles.id');
+            $nextEventsQuery->whereIn('vehicle_id', $userVehicleIds);
+        }
+
+        $nextEvents = $nextEventsQuery->take(5)->get();
+
+        // Contadores por tipo
+        $baseQuery = VehicleMandatoryEvent::where('resolved', false)
+            ->whereDate('due_date', '<=', now()->addDays(15));
+        
+        if ($user->role === 'condutor') {
+            $userVehicleIds = $user->vehicles()->pluck('vehicles.id');
+            $baseQuery->whereIn('vehicle_id', $userVehicleIds);
+        }
+
+        $totalUpcoming = (clone $baseQuery)->count();
+        $totalIpva = (clone $baseQuery)->where('type', 'ipva')->count();
+        $totalLicenciamento = (clone $baseQuery)->where('type', 'licenciamento')->count();
+        $totalMultas = (clone $baseQuery)->where('type', 'multa')->count();
+
         return view('dashboard', compact(
             'totalVehicles',
             'totalKm',
@@ -102,7 +131,12 @@ class DashboardController extends Controller
             'vehicles',
             'startDate',
             'endDate',
-            'vehicleId'
+            'vehicleId',
+            'nextEvents',
+            'totalUpcoming',
+            'totalIpva',
+            'totalLicenciamento',
+            'totalMultas'
         ));
     }
 }

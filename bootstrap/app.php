@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         // Verificar notificações de revisão diariamente às 8h
         $schedule->command('reviews:check')->dailyAt('08:00');
+        // Verificar obrigações legais diariamente às 8h
+        $schedule->command('mandatory-events:check')->dailyAt('08:00');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

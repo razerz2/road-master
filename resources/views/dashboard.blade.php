@@ -100,6 +100,101 @@
                 </div>
             </div>
 
+            <!-- Obrigações Legais -->
+            @if(isset($totalUpcoming) && $totalUpcoming > 0)
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Obrigações Legais Próximas do Vencimento
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <!-- Cards de resumo -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                            <div class="text-sm font-medium text-red-600 dark:text-red-400">Total Pendente</div>
+                            <div class="text-2xl font-bold text-red-700 dark:text-red-300">{{ $totalUpcoming }}</div>
+                        </div>
+                        <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                            <div class="text-sm font-medium text-orange-600 dark:text-orange-400">IPVA</div>
+                            <div class="text-2xl font-bold text-orange-700 dark:text-orange-300">{{ $totalIpva }}</div>
+                        </div>
+                        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                            <div class="text-sm font-medium text-yellow-600 dark:text-yellow-400">Licenciamento</div>
+                            <div class="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{{ $totalLicenciamento }}</div>
+                        </div>
+                        <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                            <div class="text-sm font-medium text-purple-600 dark:text-purple-400">Multas</div>
+                            <div class="text-2xl font-bold text-purple-700 dark:text-purple-300">{{ $totalMultas }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de próximos vencimentos -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Veículo</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Vencimento</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($nextEvents as $event)
+                                    @php
+                                        $daysUntilDue = now()->diffInDays($event->due_date, false);
+                                        $isOverdue = $event->due_date < now();
+                                        $isUpcoming = $daysUntilDue <= 10 && $daysUntilDue >= 0;
+                                    @endphp
+                                    <tr class="table-row-hover {{ $isOverdue ? 'bg-red-50 dark:bg-red-900/20' : ($isUpcoming ? 'bg-orange-50 dark:bg-orange-900/20' : '') }}">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $event->vehicle->name }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $event->vehicle->plate }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 dark:text-gray-100">{{ $event->type_name }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $event->due_date->format('d/m/Y') }}</div>
+                                            @if($isOverdue)
+                                                <div class="text-xs text-red-600 dark:text-red-400">Vencido há {{ abs($daysUntilDue) }} dia(s)</div>
+                                            @elseif($isUpcoming)
+                                                <div class="text-xs text-orange-600 dark:text-orange-400">Vence em {{ $daysUntilDue }} dia(s)</div>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($isOverdue)
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                                    Vencido
+                                                </span>
+                                            @elseif($isUpcoming)
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                                    Próximo
+                                                </span>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                                    Em dia
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ route('mandatory-events.index') }}" class="text-sm text-indigo-600 hover:text-indigo-900 dark:text-indigo-400">
+                            Ver todas as obrigações legais →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- KM por Veículo -->
             <div class="card">
                 <div class="card-header">
