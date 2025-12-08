@@ -79,6 +79,14 @@
                         >
                             Perfis
                         </button>
+                        <button 
+                            type="button"
+                            @click="activeTab = 'email'"
+                            :class="activeTab === 'email' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
+                        >
+                            Email
+                        </button>
                     </nav>
                 </div>
 
@@ -721,6 +729,101 @@
                                             </div>
                                         </div>
                                     @endforeach
+                                </div>
+
+                                <div class="flex items-center justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
+                                    <x-primary-button>
+                                        {{ __('Salvar Configurações') }}
+                                    </x-primary-button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab: Email -->
+                    <div x-show="activeTab === 'email'" x-transition>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Configurações de Notificações por Email</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                            Configure o envio de notificações por email. Quando habilitado, todas as notificações do sistema serão enviadas por email para os usuários.
+                        </p>
+                        
+                        <form method="POST" action="{{ route('settings.updateEmailSettings') }}">
+                            @csrf
+                            @method('PUT')
+                            
+                            <div class="space-y-6">
+                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
+                                    <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                                        📧 Informações Importantes
+                                    </h4>
+                                    <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                                        <p>
+                                            <strong>Configuração do Servidor:</strong> As configurações do servidor de email (SMTP) devem ser configuradas no arquivo <code>.env</code> do sistema.
+                                        </p>
+                                        <p>
+                                            <strong>Variáveis necessárias:</strong>
+                                        </p>
+                                        <ul class="list-disc list-inside ml-4 space-y-1">
+                                            <li><code>MAIL_MAILER</code> - Tipo de mailer (smtp, sendmail, etc.)</li>
+                                            <li><code>MAIL_HOST</code> - Servidor SMTP</li>
+                                            <li><code>MAIL_PORT</code> - Porta do servidor</li>
+                                            <li><code>MAIL_USERNAME</code> - Usuário do email</li>
+                                            <li><code>MAIL_PASSWORD</code> - Senha do email</li>
+                                            <li><code>MAIL_ENCRYPTION</code> - Tipo de criptografia (tls, ssl)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="md:col-span-2">
+                                        <div class="flex items-center">
+                                            <input 
+                                                type="checkbox" 
+                                                id="email_notifications_enabled" 
+                                                name="email_notifications_enabled" 
+                                                value="1"
+                                                class="rounded border-gray-300 dark:border-gray-700"
+                                                {{ old('email_notifications_enabled', $settings['email']['email_notifications_enabled'] ?? '0') === '1' ? 'checked' : '' }}
+                                            >
+                                            <x-input-label for="email_notifications_enabled" :value="__('Habilitar Notificações por Email')" class="ml-2" />
+                                        </div>
+                                        <x-input-error :messages="$errors->get('email_notifications_enabled')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Quando habilitado, todas as notificações do sistema serão enviadas por email para os usuários que possuem email cadastrado.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="email_from_address" :value="__('Email Remetente')" />
+                                        <x-text-input 
+                                            id="email_from_address" 
+                                            class="block mt-1 w-full" 
+                                            type="email" 
+                                            name="email_from_address" 
+                                            :value="old('email_from_address', $settings['email']['email_from_address'] ?? config('mail.from.address', 'noreply@example.com'))" 
+                                            required 
+                                        />
+                                        <x-input-error :messages="$errors->get('email_from_address')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Endereço de email que aparecerá como remetente nas notificações.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="email_from_name" :value="__('Nome do Remetente')" />
+                                        <x-text-input 
+                                            id="email_from_name" 
+                                            class="block mt-1 w-full" 
+                                            type="text" 
+                                            name="email_from_name" 
+                                            :value="old('email_from_name', $settings['email']['email_from_name'] ?? config('mail.from.name', $settings['general']['app_name'] ?? 'Road Master'))" 
+                                            required 
+                                        />
+                                        <x-input-error :messages="$errors->get('email_from_name')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Nome que aparecerá como remetente nas notificações.
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div class="flex items-center justify-end pt-6 border-t border-gray-200 dark:border-gray-700">

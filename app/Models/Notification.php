@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\EmailNotificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,6 +24,14 @@ class Notification extends Model
             'read' => 'boolean',
             'read_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Enviar email quando uma notificação é criada
+        static::created(function (Notification $notification) {
+            EmailNotificationService::sendToUser($notification);
+        });
     }
 
     public function user(): BelongsTo
@@ -108,7 +117,11 @@ class Notification extends Model
         }
         
         if (!empty($notifications)) {
-            self::insert($notifications);
+            // Usar insert para criar múltiplas notificações de uma vez
+            // Mas precisamos criar individualmente para disparar o evento created
+            foreach ($notifications as $notificationData) {
+                self::create($notificationData);
+            }
         }
     }
 }

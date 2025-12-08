@@ -15,16 +15,22 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Se apenas avatar está sendo atualizado, name e email são opcionais
+        $isAvatarOnly = $this->has('avatar') || $this->has('avatar_base64') || $this->has('remove_avatar');
+        
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [$isAvatarOnly ? 'nullable' : 'required', 'string', 'max:255'],
             'email' => [
-                'required',
+                $isAvatarOnly ? 'nullable' : 'required',
                 'string',
                 'lowercase',
                 'email',
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:2048'],
+            'avatar_base64' => ['nullable', 'string'],
+            'remove_avatar' => ['nullable', 'boolean'],
         ];
     }
 }

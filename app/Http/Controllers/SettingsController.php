@@ -26,6 +26,7 @@ class SettingsController extends Controller
             'fuelings' => SystemSetting::getGroup('fuelings'),
             'maintenances' => SystemSetting::getGroup('maintenances'),
             'locations' => SystemSetting::getGroup('locations'),
+            'email' => SystemSetting::getGroup('email'),
         ];
 
         // Valores padrão se não existirem
@@ -319,6 +320,27 @@ class SettingsController extends Controller
 
         return redirect()->route('settings.index', ['activeTab' => 'profiles'])
             ->with('success', 'Módulos padrão para condutores atualizados com sucesso!');
+    }
+
+    // ========== CONFIGURAÇÕES DE EMAIL ==========
+
+    public function updateEmailSettings(Request $request)
+    {
+        Gate::authorize('viewAny', \App\Models\User::class);
+
+        $validated = $request->validate([
+            'email_notifications_enabled' => 'nullable|boolean',
+            'email_from_address' => 'required|email',
+            'email_from_name' => 'required|string|max:255',
+        ]);
+
+        // Salvar configurações de email
+        SystemSetting::set('email_notifications_enabled', $validated['email_notifications_enabled'] ? '1' : '0', 'boolean', 'email', 'Habilitar notificações por email');
+        SystemSetting::set('email_from_address', $validated['email_from_address'], 'string', 'email', 'Endereço de email remetente');
+        SystemSetting::set('email_from_name', $validated['email_from_name'], 'string', 'email', 'Nome do remetente');
+
+        return redirect()->route('settings.index', ['activeTab' => 'email'])
+            ->with('success', 'Configurações de email atualizadas com sucesso!');
     }
 }
 

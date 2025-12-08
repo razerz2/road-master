@@ -532,7 +532,7 @@ class ReportController extends Controller
                     if ($departureTime && $returnTime) {
                         $departure = Carbon::parse($trip->date->format('Y-m-d') . ' ' . $departureTime);
                         $return = Carbon::parse($trip->date->format('Y-m-d') . ' ' . $returnTime);
-                        $routes[$key]['avg_time'] += $departure->diffInMinutes($return);
+                $routes[$key]['avg_time'] += $departure->diffInMinutes($return);
                     }
                 } catch (\Exception $e) {
                     // Ignorar erros de parse de time e continuar
