@@ -74,7 +74,7 @@
                                 </div>
                             </x-nav-dropdown-link>
                             @endcan
-                            @can('viewAny', App\Models\VehicleMandatoryEvent::class)
+                            @if(Auth::user()->role === 'admin' || Auth::user()->hasPermission('mandatory_events', 'view'))
                             <x-nav-dropdown-link :href="route('mandatory-events.index')" :active="request()->routeIs('mandatory-events.*')">
                                 <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@
                                     {{ __('Obrigações Legais') }}
                                 </div>
                             </x-nav-dropdown-link>
-                            @endcan
+                            @endif
                         </x-slot>
                     </x-nav-dropdown>
 
@@ -343,11 +343,11 @@
                         {{ __('Notificações de Revisão') }}
                     </x-responsive-nav-link>
                     @endcan
-                    @can('viewAny', App\Models\VehicleMandatoryEvent::class)
+                    @if(Auth::user()->role === 'admin' || Auth::user()->hasPermission('mandatory_events', 'view'))
                     <x-responsive-nav-link :href="route('mandatory-events.index')" :active="request()->routeIs('mandatory-events.*')">
                         {{ __('Obrigações Legais') }}
                     </x-responsive-nav-link>
-                    @endcan
+                    @endif
                 </div>
             </div>
 
