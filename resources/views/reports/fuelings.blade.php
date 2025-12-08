@@ -7,6 +7,9 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <!-- Botões de Exportação -->
+            <x-export-buttons reportName="Resumo de Abastecimentos" routeName="reports.fuelings" :filters="request()->all()" />
+
             <!-- Filtros -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">

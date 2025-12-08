@@ -930,6 +930,1106 @@ class ReportController extends Controller
         );
     }
 
+    // ========== EXPORTAÇÕES EXCEL E PDF ==========
+    
+    // Exportação Fuel Cost
+    public function fuelCostExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+        $driverId = $request->input('driver_id');
+
+        $query = Fueling::select('vehicle_id', 'user_id', DB::raw('SUM(total_amount) as total_cost'), DB::raw('SUM(liters) as total_liters'))
+            ->whereBetween('date_time', [$startDate, $endDate])
+            ->with(['vehicle', 'user']);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        if ($driverId) {
+            $query->where('user_id', $driverId);
+        }
+
+        $results = $query->groupBy('vehicle_id', 'user_id')->get();
+
+        $data = [];
+        foreach ($results as $result) {
+            $data[] = [
+                'Veículo' => $result->vehicle->name ?? '-',
+                'Motorista' => $result->user->name ?? '-',
+                'Litros' => number_format($result->total_liters, 2, ',', '.') . ' L',
+                'Custo Total' => 'R$ ' . number_format($result->total_cost, 2, ',', '.'),
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Veículo', 'Motorista', 'Litros', 'Custo Total'],
+            'Custo de Combustível',
+            'custo_combustivel_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function fuelCostExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+        $driverId = $request->input('driver_id');
+
+        $query = Fueling::select('vehicle_id', 'user_id', DB::raw('SUM(total_amount) as total_cost'), DB::raw('SUM(liters) as total_liters'))
+            ->whereBetween('date_time', [$startDate, $endDate])
+            ->with(['vehicle', 'user']);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        if ($driverId) {
+            $query->where('user_id', $driverId);
+        }
+
+        $results = $query->groupBy('vehicle_id', 'user_id')->get();
+
+        $data = [];
+        foreach ($results as $result) {
+            $data[] = [
+                'Veículo' => $result->vehicle->name ?? '-',
+                'Motorista' => $result->user->name ?? '-',
+                'Litros' => number_format($result->total_liters, 2, ',', '.') . ' L',
+                'Custo Total' => 'R$ ' . number_format($result->total_cost, 2, ',', '.'),
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Veículo', 'Motorista', 'Litros', 'Custo Total'],
+            'Relatório - Custo de Combustível',
+            'table',
+            'custo_combustivel_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Fuel Cost By Vehicle
+    public function fuelCostByVehicleExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $results = Fueling::select('vehicle_id', DB::raw('SUM(total_amount) as total_cost'))
+            ->whereBetween('date_time', [$startDate, $endDate])
+            ->groupBy('vehicle_id')
+            ->with('vehicle')
+            ->get();
+
+        $data = [];
+        foreach ($results as $result) {
+            $data[] = [
+                'Veículo' => $result->vehicle->name ?? '-',
+                'Custo Total' => 'R$ ' . number_format($result->total_cost, 2, ',', '.'),
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Veículo', 'Custo Total'],
+            'Custo de Combustível por Veículo',
+            'custo_combustivel_por_veiculo_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function fuelCostByVehicleExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $results = Fueling::select('vehicle_id', DB::raw('SUM(total_amount) as total_cost'))
+            ->whereBetween('date_time', [$startDate, $endDate])
+            ->groupBy('vehicle_id')
+            ->with('vehicle')
+            ->get();
+
+        $data = [];
+        foreach ($results as $result) {
+            $data[] = [
+                'Veículo' => $result->vehicle->name ?? '-',
+                'Custo Total' => 'R$ ' . number_format($result->total_cost, 2, ',', '.'),
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Veículo', 'Custo Total'],
+            'Relatório - Custo de Combustível por Veículo',
+            'table',
+            'custo_combustivel_por_veiculo_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Fuelings
+    public function fuelingsExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+        $fuelType = $request->input('fuel_type');
+
+        $query = Fueling::with(['vehicle', 'user'])
+            ->whereBetween('date_time', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        if ($fuelType) {
+            $query->where('fuel_type', $fuelType);
+        }
+
+        $fuelings = $query->orderBy('date_time', 'desc')->get();
+
+        $data = [];
+        foreach ($fuelings as $fueling) {
+            $data[] = [
+                'Data/Hora' => $fueling->date_time->format('d/m/Y H:i'),
+                'Veículo' => $fueling->vehicle->name ?? '-',
+                'Tipo' => $fueling->fuel_type ?? '-',
+                'Litros' => number_format($fueling->liters, 2, ',', '.') . ' L',
+                'Preço/L' => 'R$ ' . number_format($fueling->price_per_liter, 2, ',', '.'),
+                'Valor Total' => 'R$ ' . number_format($fueling->total_amount, 2, ',', '.'),
+                'Posto' => $fueling->gas_station_name ?? '-',
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Data/Hora', 'Veículo', 'Tipo', 'Litros', 'Preço/L', 'Valor Total', 'Posto'],
+            'Resumo de Abastecimentos',
+            'abastecimentos_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function fuelingsExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+        $fuelType = $request->input('fuel_type');
+
+        $query = Fueling::with(['vehicle', 'user'])
+            ->whereBetween('date_time', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        if ($fuelType) {
+            $query->where('fuel_type', $fuelType);
+        }
+
+        $fuelings = $query->orderBy('date_time', 'desc')->get();
+
+        $data = [];
+        foreach ($fuelings as $fueling) {
+            $data[] = [
+                'Data/Hora' => $fueling->date_time->format('d/m/Y H:i'),
+                'Veículo' => $fueling->vehicle->name ?? '-',
+                'Tipo' => $fueling->fuel_type ?? '-',
+                'Litros' => number_format($fueling->liters, 2, ',', '.') . ' L',
+                'Preço/L' => 'R$ ' . number_format($fueling->price_per_liter, 2, ',', '.'),
+                'Valor Total' => 'R$ ' . number_format($fueling->total_amount, 2, ',', '.'),
+                'Posto' => $fueling->gas_station_name ?? '-',
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Data/Hora', 'Veículo', 'Tipo', 'Litros', 'Preço/L', 'Valor Total', 'Posto'],
+            'Relatório - Resumo de Abastecimentos',
+            'table',
+            'abastecimentos_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Maintenances
+    public function maintenancesExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Maintenance::with('vehicle')
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $maintenances = $query->get();
+
+        $data = [];
+        foreach ($maintenances as $maintenance) {
+            $data[] = [
+                'Data' => $maintenance->date->format('d/m/Y'),
+                'Veículo' => $maintenance->vehicle->name ?? '-',
+                'Tipo' => ucfirst(str_replace('_', ' ', $maintenance->type)),
+                'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
+                'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM'],
+            'Manutenções',
+            'manutencoes_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function maintenancesExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Maintenance::with('vehicle')
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $maintenances = $query->get();
+
+        $data = [];
+        foreach ($maintenances as $maintenance) {
+            $data[] = [
+                'Data' => $maintenance->date->format('d/m/Y'),
+                'Veículo' => $maintenance->vehicle->name ?? '-',
+                'Tipo' => ucfirst(str_replace('_', ' ', $maintenance->type)),
+                'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
+                'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM'],
+            'Relatório - Manutenções',
+            'table',
+            'manutencoes_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Maintenances Detailed
+    public function maintenancesDetailedExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Maintenance::with(['vehicle', 'maintenanceType'])
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $maintenances = $query->orderBy('date', 'desc')->get();
+
+        $data = [];
+        foreach ($maintenances as $maintenance) {
+            $data[] = [
+                'Data' => $maintenance->date->format('d/m/Y'),
+                'Veículo' => $maintenance->vehicle->name ?? '-',
+                'Tipo' => $maintenance->maintenanceType->name ?? ucfirst(str_replace('_', ' ', $maintenance->type)),
+                'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
+                'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
+                'Descrição' => $maintenance->description ?? '-',
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Descrição'],
+            'Manutenções Detalhado',
+            'manutencoes_detalhado_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function maintenancesDetailedExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Maintenance::with(['vehicle', 'maintenanceType'])
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $maintenances = $query->orderBy('date', 'desc')->get();
+
+        $data = [];
+        foreach ($maintenances as $maintenance) {
+            $data[] = [
+                'Data' => $maintenance->date->format('d/m/Y'),
+                'Veículo' => $maintenance->vehicle->name ?? '-',
+                'Tipo' => $maintenance->maintenanceType->name ?? ucfirst(str_replace('_', ' ', $maintenance->type)),
+                'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
+                'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
+                'Descrição' => $maintenance->description ?? '-',
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Descrição'],
+            'Relatório - Manutenções Detalhado',
+            'table',
+            'manutencoes_detalhado_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Driver Usage
+    public function driverUsageExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $driverId = $request->input('driver_id');
+
+        $query = Trip::select('driver_id', 
+                DB::raw('SUM(km_total) as total_km'),
+                DB::raw('COUNT(*) as trip_count'),
+                DB::raw('AVG(km_total) as avg_km_per_trip'))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with('driver')
+            ->groupBy('driver_id');
+
+        if ($driverId) {
+            $query->where('driver_id', $driverId);
+        }
+
+        $results = $query->get();
+
+        $daysInPeriod = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+        $monthsInPeriod = $daysInPeriod / 30;
+
+        $data = [];
+        foreach ($results as $result) {
+            $avgKmPerMonth = $monthsInPeriod > 0 ? round($result->total_km / $monthsInPeriod, 2) : 0;
+            $data[] = [
+                'Condutor' => $result->driver->name ?? '-',
+                'KM Total' => number_format($result->total_km, 0, ',', '.') . ' km',
+                'Quantidade de Percursos' => $result->trip_count,
+                'KM Médio por Percurso' => number_format($result->avg_km_per_trip, 2, ',', '.') . ' km',
+                'KM Médio por Mês' => number_format($avgKmPerMonth, 2, ',', '.') . ' km',
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Condutor', 'KM Total', 'Quantidade de Percursos', 'KM Médio por Percurso', 'KM Médio por Mês'],
+            'Uso da Frota por Condutor',
+            'uso_frota_condutor_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function driverUsageExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $driverId = $request->input('driver_id');
+
+        $query = Trip::select('driver_id', 
+                DB::raw('SUM(km_total) as total_km'),
+                DB::raw('COUNT(*) as trip_count'),
+                DB::raw('AVG(km_total) as avg_km_per_trip'))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with('driver')
+            ->groupBy('driver_id');
+
+        if ($driverId) {
+            $query->where('driver_id', $driverId);
+        }
+
+        $results = $query->get();
+
+        $daysInPeriod = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+        $monthsInPeriod = $daysInPeriod / 30;
+
+        $data = [];
+        foreach ($results as $result) {
+            $avgKmPerMonth = $monthsInPeriod > 0 ? round($result->total_km / $monthsInPeriod, 2) : 0;
+            $data[] = [
+                'Condutor' => $result->driver->name ?? '-',
+                'KM Total' => number_format($result->total_km, 0, ',', '.') . ' km',
+                'Quantidade de Percursos' => $result->trip_count,
+                'KM Médio por Percurso' => number_format($result->avg_km_per_trip, 2, ',', '.') . ' km',
+                'KM Médio por Mês' => number_format($avgKmPerMonth, 2, ',', '.') . ' km',
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Condutor', 'KM Total', 'Quantidade de Percursos', 'KM Médio por Percurso', 'KM Médio por Mês'],
+            'Relatório - Uso da Frota por Condutor',
+            'table',
+            'uso_frota_condutor_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Routes and Stops
+    public function routesAndStopsExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Trip::with(['vehicle', 'originLocation', 'destinationLocation', 'stops.location'])
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $trips = $query->orderBy('date', 'desc')->get();
+
+        // Rotas mais frequentes
+        $routes = [];
+        foreach ($trips as $trip) {
+            $key = $trip->origin_location_id . '-' . $trip->destination_location_id;
+            if (!isset($routes[$key])) {
+                $routes[$key] = [
+                    'origin' => $trip->originLocation,
+                    'destination' => $trip->destinationLocation,
+                    'count' => 0,
+                    'total_km' => 0,
+                ];
+            }
+            $routes[$key]['count']++;
+            $routes[$key]['total_km'] += $trip->km_total;
+        }
+
+        $data = [];
+        foreach ($routes as $route) {
+            $data[] = [
+                'Origem' => $route['origin']->name ?? '-',
+                'Destino' => $route['destination']->name ?? '-',
+                'Quantidade' => $route['count'],
+                'KM Total' => number_format($route['total_km'], 0, ',', '.') . ' km',
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Origem', 'Destino', 'Quantidade', 'KM Total'],
+            'Rotas Mais Frequentes',
+            'rotas_paradas_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function routesAndStopsExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Trip::with(['vehicle', 'originLocation', 'destinationLocation', 'stops.location'])
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $trips = $query->orderBy('date', 'desc')->get();
+
+        // Rotas mais frequentes
+        $routes = [];
+        foreach ($trips as $trip) {
+            $key = $trip->origin_location_id . '-' . $trip->destination_location_id;
+            if (!isset($routes[$key])) {
+                $routes[$key] = [
+                    'origin' => $trip->originLocation,
+                    'destination' => $trip->destinationLocation,
+                    'count' => 0,
+                    'total_km' => 0,
+                ];
+            }
+            $routes[$key]['count']++;
+            $routes[$key]['total_km'] += $trip->km_total;
+        }
+
+        $data = [];
+        foreach ($routes as $route) {
+            $data[] = [
+                'Origem' => $route['origin']->name ?? '-',
+                'Destino' => $route['destination']->name ?? '-',
+                'Quantidade' => $route['count'],
+                'KM Total' => number_format($route['total_km'], 0, ',', '.') . ' km',
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Origem', 'Destino', 'Quantidade', 'KM Total'],
+            'Relatório - Rotas Mais Frequentes',
+            'table',
+            'rotas_paradas_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Consolidated
+    public function consolidatedExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $vehicles = Vehicle::where('active', true)->get();
+        $data = [];
+
+        foreach ($vehicles as $vehicle) {
+            if ($vehicleId && $vehicle->id != $vehicleId) {
+                continue;
+            }
+
+            $trips = Trip::where('vehicle_id', $vehicle->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get();
+
+            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
+                ->whereBetween('date_time', [$startDate, $endDate])
+                ->get();
+
+            $maintenances = Maintenance::where('vehicle_id', $vehicle->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get();
+
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
+            $totalFuelCost = $fuelings->sum('total_amount');
+            $totalMaintenanceCost = $maintenances->sum('cost');
+            $tco = $totalFuelCost + $totalMaintenanceCost;
+            $consumption = $consumptionData['real_consumption'] ?? $consumptionData['period_consumption'];
+
+            $data[] = [
+                'Veículo' => $vehicle->name,
+                'KM Rodado' => number_format($consumptionData['total_km'], 0, ',', '.') . ' km',
+                'Percursos' => $trips->count(),
+                'Litros' => number_format($consumptionData['total_liters'], 2, ',', '.') . ' L',
+                'Consumo Médio' => $consumption ? number_format($consumption, 2, ',', '.') . ' km/L' : '-',
+                'Custo Combustível' => 'R$ ' . number_format($totalFuelCost, 2, ',', '.'),
+                'Manutenções' => $maintenances->count(),
+                'Custo Manutenção' => 'R$ ' . number_format($totalMaintenanceCost, 2, ',', '.'),
+                'TCO' => 'R$ ' . number_format($tco, 2, ',', '.'),
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Veículo', 'KM Rodado', 'Percursos', 'Litros', 'Consumo Médio', 'Custo Combustível', 'Manutenções', 'Custo Manutenção', 'TCO'],
+            'Relatório Consolidado',
+            'relatorio_consolidado_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function consolidatedExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $vehicleId = $request->input('vehicle_id');
+
+        $vehicles = Vehicle::where('active', true)->get();
+        $data = [];
+
+        foreach ($vehicles as $vehicle) {
+            if ($vehicleId && $vehicle->id != $vehicleId) {
+                continue;
+            }
+
+            $trips = Trip::where('vehicle_id', $vehicle->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get();
+
+            $fuelings = Fueling::where('vehicle_id', $vehicle->id)
+                ->whereBetween('date_time', [$startDate, $endDate])
+                ->get();
+
+            $maintenances = Maintenance::where('vehicle_id', $vehicle->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get();
+
+            $consumptionData = Fueling::calculateRealConsumption($vehicle->id, $startDate, $endDate);
+            $totalFuelCost = $fuelings->sum('total_amount');
+            $totalMaintenanceCost = $maintenances->sum('cost');
+            $tco = $totalFuelCost + $totalMaintenanceCost;
+            $consumption = $consumptionData['real_consumption'] ?? $consumptionData['period_consumption'];
+
+            $data[] = [
+                'Veículo' => $vehicle->name,
+                'KM Rodado' => number_format($consumptionData['total_km'], 0, ',', '.') . ' km',
+                'Percursos' => $trips->count(),
+                'Litros' => number_format($consumptionData['total_liters'], 2, ',', '.') . ' L',
+                'Consumo Médio' => $consumption ? number_format($consumption, 2, ',', '.') . ' km/L' : '-',
+                'Custo Combustível' => 'R$ ' . number_format($totalFuelCost, 2, ',', '.'),
+                'Manutenções' => $maintenances->count(),
+                'Custo Manutenção' => 'R$ ' . number_format($totalMaintenanceCost, 2, ',', '.'),
+                'TCO' => 'R$ ' . number_format($tco, 2, ',', '.'),
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Veículo', 'KM Rodado', 'Percursos', 'Litros', 'Consumo Médio', 'Custo Combustível', 'Manutenções', 'Custo Manutenção', 'TCO'],
+            'Relatório Consolidado',
+            'table',
+            'relatorio_consolidado_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Ranking
+    public function rankingExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $topDrivers = Trip::select('driver_id', DB::raw('SUM(km_total) as total_km'), DB::raw('COUNT(*) as trip_count'))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with('driver')
+            ->groupBy('driver_id')
+            ->orderBy('total_km', 'desc')
+            ->limit(10)
+            ->get();
+
+        $data = [];
+        foreach ($topDrivers as $driver) {
+            $data[] = [
+                'Condutor' => $driver->driver->name ?? '-',
+                'KM Total' => number_format($driver->total_km, 0, ',', '.') . ' km',
+                'Quantidade de Percursos' => $driver->trip_count,
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Condutor', 'KM Total', 'Quantidade de Percursos'],
+            'Ranking - Top Condutores',
+            'ranking_condutores_' . $startDate . '_' . $endDate
+        );
+    }
+
+    public function rankingExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $startDate = $request->input('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $topDrivers = Trip::select('driver_id', DB::raw('SUM(km_total) as total_km'), DB::raw('COUNT(*) as trip_count'))
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with('driver')
+            ->groupBy('driver_id')
+            ->orderBy('total_km', 'desc')
+            ->limit(10)
+            ->get();
+
+        $data = [];
+        foreach ($topDrivers as $driver) {
+            $data[] = [
+                'Condutor' => $driver->driver->name ?? '-',
+                'KM Total' => number_format($driver->total_km, 0, ',', '.') . ' km',
+                'Quantidade de Percursos' => $driver->trip_count,
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Condutor', 'KM Total', 'Quantidade de Percursos'],
+            'Relatório - Ranking Top Condutores',
+            'table',
+            'ranking_condutores_' . $startDate . '_' . $endDate
+        );
+    }
+
+    // Exportação Upcoming Maintenance
+    public function upcomingMaintenanceExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Maintenance::with('vehicle')
+            ->where(function($q) {
+                $q->whereNotNull('next_due_date')
+                  ->orWhereNotNull('next_due_odometer');
+            });
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $maintenances = $query->get();
+
+        $data = [];
+        foreach ($maintenances as $maintenance) {
+            $vehicle = $maintenance->vehicle;
+            $currentKm = $vehicle->current_odometer ?? 0;
+            $today = Carbon::today();
+            
+            $nextDueDate = $maintenance->next_due_date ? $maintenance->next_due_date->format('d/m/Y') : '-';
+            $nextDueKm = $maintenance->next_due_odometer ? number_format($maintenance->next_due_odometer, 0, ',', '.') . ' km' : '-';
+            
+            $status = 'OK';
+            if ($maintenance->next_due_date) {
+                $daysUntil = $today->diffInDays($maintenance->next_due_date, false);
+                if ($daysUntil < 0) {
+                    $status = 'Atrasado (' . abs($daysUntil) . ' dias)';
+                } elseif ($daysUntil <= 30) {
+                    $status = 'Próximo (' . $daysUntil . ' dias)';
+                }
+            }
+            
+            if ($maintenance->next_due_odometer) {
+                $kmUntil = $maintenance->next_due_odometer - $currentKm;
+                if ($kmUntil < 0) {
+                    $status = 'Atrasado (' . number_format(abs($kmUntil), 0, ',', '.') . ' km)';
+                } elseif ($kmUntil <= 1000) {
+                    $status = 'Próximo (' . number_format($kmUntil, 0, ',', '.') . ' km)';
+                }
+            }
+
+            $data[] = [
+                'Veículo' => $vehicle->name ?? '-',
+                'Tipo' => ucfirst(str_replace('_', ' ', $maintenance->type)),
+                'Próxima Data' => $nextDueDate,
+                'Próximo KM' => $nextDueKm,
+                'KM Atual' => number_format($currentKm, 0, ',', '.') . ' km',
+                'Status' => $status,
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Veículo', 'Tipo', 'Próxima Data', 'Próximo KM', 'KM Atual', 'Status'],
+            'Manutenções Futuras',
+            'manutencoes_futuras'
+        );
+    }
+
+    public function upcomingMaintenanceExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Maintenance::with('vehicle')
+            ->where(function($q) {
+                $q->whereNotNull('next_due_date')
+                  ->orWhereNotNull('next_due_odometer');
+            });
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $maintenances = $query->get();
+
+        $data = [];
+        foreach ($maintenances as $maintenance) {
+            $vehicle = $maintenance->vehicle;
+            $currentKm = $vehicle->current_odometer ?? 0;
+            $today = Carbon::today();
+            
+            $nextDueDate = $maintenance->next_due_date ? $maintenance->next_due_date->format('d/m/Y') : '-';
+            $nextDueKm = $maintenance->next_due_odometer ? number_format($maintenance->next_due_odometer, 0, ',', '.') . ' km' : '-';
+            
+            $status = 'OK';
+            if ($maintenance->next_due_date) {
+                $daysUntil = $today->diffInDays($maintenance->next_due_date, false);
+                if ($daysUntil < 0) {
+                    $status = 'Atrasado (' . abs($daysUntil) . ' dias)';
+                } elseif ($daysUntil <= 30) {
+                    $status = 'Próximo (' . $daysUntil . ' dias)';
+                }
+            }
+            
+            if ($maintenance->next_due_odometer) {
+                $kmUntil = $maintenance->next_due_odometer - $currentKm;
+                if ($kmUntil < 0) {
+                    $status = 'Atrasado (' . number_format(abs($kmUntil), 0, ',', '.') . ' km)';
+                } elseif ($kmUntil <= 1000) {
+                    $status = 'Próximo (' . number_format($kmUntil, 0, ',', '.') . ' km)';
+                }
+            }
+
+            $data[] = [
+                'Veículo' => $vehicle->name ?? '-',
+                'Tipo' => ucfirst(str_replace('_', ' ', $maintenance->type)),
+                'Próxima Data' => $nextDueDate,
+                'Próximo KM' => $nextDueKm,
+                'KM Atual' => number_format($currentKm, 0, ',', '.') . ' km',
+                'Status' => $status,
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Veículo', 'Tipo', 'Próxima Data', 'Próximo KM', 'KM Atual', 'Status'],
+            'Relatório - Manutenções Futuras',
+            'table',
+            'manutencoes_futuras'
+        );
+    }
+
+    // Exportação Odometer Audit
+    public function odometerAuditExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Trip::with('vehicle');
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $trips = $query->orderBy('vehicle_id')->orderBy('date')->orderBy('odometer_start')->get();
+
+        $data = [];
+        $previousTrip = null;
+
+        foreach ($trips as $trip) {
+            $issues = [];
+
+            if ($previousTrip && $previousTrip->vehicle_id == $trip->vehicle_id) {
+                if ($trip->odometer_start < $previousTrip->odometer_end) {
+                    $issues[] = 'KM regressivo detectado';
+                }
+
+                $expectedKm = $trip->odometer_start - $previousTrip->odometer_end;
+                if ($expectedKm < 0) {
+                    $issues[] = 'KM inicial menor que KM final anterior';
+                } elseif ($expectedKm > 10000) {
+                    $issues[] = 'Gap suspeito: ' . number_format($expectedKm, 0, ',', '.') . ' km';
+                }
+            }
+
+            if ($trip->odometer_start > $trip->odometer_end) {
+                $issues[] = 'Odômetro inicial maior que final';
+            }
+
+            if (!empty($issues) || !$vehicleId) {
+                $data[] = [
+                    'Data' => $trip->date->format('d/m/Y'),
+                    'Veículo' => $trip->vehicle->name ?? '-',
+                    'KM Inicial' => number_format($trip->odometer_start, 0, ',', '.') . ' km',
+                    'KM Final' => number_format($trip->odometer_end, 0, ',', '.') . ' km',
+                    'KM Rodado' => number_format($trip->km_total, 0, ',', '.') . ' km',
+                    'Problemas' => !empty($issues) ? implode('; ', $issues) : 'OK',
+                ];
+            }
+
+            $previousTrip = $trip;
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Data', 'Veículo', 'KM Inicial', 'KM Final', 'KM Rodado', 'Problemas'],
+            'Auditoria de Odômetro',
+            'auditoria_odometro'
+        );
+    }
+
+    public function odometerAuditExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = Trip::with('vehicle');
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $trips = $query->orderBy('vehicle_id')->orderBy('date')->orderBy('odometer_start')->get();
+
+        $data = [];
+        $previousTrip = null;
+
+        foreach ($trips as $trip) {
+            $issues = [];
+
+            if ($previousTrip && $previousTrip->vehicle_id == $trip->vehicle_id) {
+                if ($trip->odometer_start < $previousTrip->odometer_end) {
+                    $issues[] = 'KM regressivo detectado';
+                }
+
+                $expectedKm = $trip->odometer_start - $previousTrip->odometer_end;
+                if ($expectedKm < 0) {
+                    $issues[] = 'KM inicial menor que KM final anterior';
+                } elseif ($expectedKm > 10000) {
+                    $issues[] = 'Gap suspeito: ' . number_format($expectedKm, 0, ',', '.') . ' km';
+                }
+            }
+
+            if ($trip->odometer_start > $trip->odometer_end) {
+                $issues[] = 'Odômetro inicial maior que final';
+            }
+
+            if (!empty($issues) || !$vehicleId) {
+                $data[] = [
+                    'Data' => $trip->date->format('d/m/Y'),
+                    'Veículo' => $trip->vehicle->name ?? '-',
+                    'KM Inicial' => number_format($trip->odometer_start, 0, ',', '.') . ' km',
+                    'KM Final' => number_format($trip->odometer_end, 0, ',', '.') . ' km',
+                    'KM Rodado' => number_format($trip->km_total, 0, ',', '.') . ' km',
+                    'Problemas' => !empty($issues) ? implode('; ', $issues) : 'OK',
+                ];
+            }
+
+            $previousTrip = $trip;
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Data', 'Veículo', 'KM Inicial', 'KM Final', 'KM Rodado', 'Problemas'],
+            'Relatório - Auditoria de Odômetro',
+            'table',
+            'auditoria_odometro'
+        );
+    }
+
+    // Exportação Reviews
+    public function reviewsExportExcel(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = ReviewNotification::with('vehicle')
+            ->where('active', true);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $reviews = $query->get();
+
+        $data = [];
+        foreach ($reviews as $review) {
+            $vehicle = $review->vehicle;
+            $currentKm = $vehicle->current_odometer ?? 0;
+            $kmUntil = $review->notification_km - $currentKm;
+            $status = 'OK';
+            if ($kmUntil < 0) {
+                $status = 'Atrasado';
+            } elseif ($kmUntil <= 500) {
+                $status = 'Atenção';
+            }
+
+            $data[] = [
+                'Veículo' => $vehicle->name ?? '-',
+                'Tipo de Revisão' => $review->name ?: $review->review_type_name,
+                'KM Atual' => number_format($currentKm, 0, ',', '.') . ' km',
+                'KM Notificação' => number_format($review->notification_km, 0, ',', '.') . ' km',
+                'KM Restantes' => number_format($kmUntil, 0, ',', '.') . ' km',
+                'Status' => $status,
+            ];
+        }
+
+        return $this->exportToExcel(
+            $data,
+            ['Veículo', 'Tipo de Revisão', 'KM Atual', 'KM Notificação', 'KM Restantes', 'Status'],
+            'Controle de Revisões',
+            'controle_revisoes'
+        );
+    }
+
+    public function reviewsExportPdf(Request $request)
+    {
+        $this->checkReportsPermission();
+        
+        $vehicleId = $request->input('vehicle_id');
+
+        $query = ReviewNotification::with('vehicle')
+            ->where('active', true);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $reviews = $query->get();
+
+        $data = [];
+        foreach ($reviews as $review) {
+            $vehicle = $review->vehicle;
+            $currentKm = $vehicle->current_odometer ?? 0;
+            $kmUntil = $review->notification_km - $currentKm;
+            $status = 'OK';
+            if ($kmUntil < 0) {
+                $status = 'Atrasado';
+            } elseif ($kmUntil <= 500) {
+                $status = 'Atenção';
+            }
+
+            $data[] = [
+                'Veículo' => $vehicle->name ?? '-',
+                'Tipo de Revisão' => $review->name ?: $review->review_type_name,
+                'KM Atual' => number_format($currentKm, 0, ',', '.') . ' km',
+                'KM Notificação' => number_format($review->notification_km, 0, ',', '.') . ' km',
+                'KM Restantes' => number_format($kmUntil, 0, ',', '.') . ' km',
+                'Status' => $status,
+            ];
+        }
+
+        return $this->exportToPDF(
+            $data,
+            ['Veículo', 'Tipo de Revisão', 'KM Atual', 'KM Notificação', 'KM Restantes', 'Status'],
+            'Relatório - Controle de Revisões',
+            'table',
+            'controle_revisoes'
+        );
+    }
+
     /**
      * Formata um valor de time para o formato H:i:s válido
      * Remove zeros extras e garante formato correto
