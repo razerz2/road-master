@@ -524,9 +524,20 @@ class ReportController extends Controller
             $routes[$key]['total_km'] += $trip->km_total;
             
             if ($trip->departure_time && $trip->return_time) {
-                $departure = Carbon::parse($trip->date->format('Y-m-d') . ' ' . $trip->departure_time);
-                $return = Carbon::parse($trip->date->format('Y-m-d') . ' ' . $trip->return_time);
-                $routes[$key]['avg_time'] += $departure->diffInMinutes($return);
+                try {
+                    // Formatar o time corretamente (remover zeros extras e garantir formato H:i:s)
+                    $departureTime = $this->formatTime($trip->departure_time);
+                    $returnTime = $this->formatTime($trip->return_time);
+                    
+                    if ($departureTime && $returnTime) {
+                        $departure = Carbon::parse($trip->date->format('Y-m-d') . ' ' . $departureTime);
+                        $return = Carbon::parse($trip->date->format('Y-m-d') . ' ' . $returnTime);
+                        $routes[$key]['avg_time'] += $departure->diffInMinutes($return);
+                    }
+                } catch (\Exception $e) {
+                    // Ignorar erros de parse de time e continuar
+                    continue;
+                }
             }
         }
 
@@ -917,5 +928,62 @@ class ReportController extends Controller
             'table',
             'consumo_medio_' . $startDate . '_' . $endDate
         );
+    }
+
+    /**
+     * Formata um valor de time para o formato H:i:s válido
+     * Remove zeros extras e garante formato correto
+     */
+    private function formatTime($time)
+    {
+        if (empty($time)) {
+            return null;
+        }
+
+        // Se já for uma string, limpar e formatar
+        $timeString = (string) $time;
+        
+        // Remover espaços
+        $timeString = trim($timeString);
+        
+        // Se estiver vazio, retornar null
+        if (empty($timeString)) {
+            return null;
+        }
+
+        // Tentar diferentes formatos
+        // Formato esperado: H:i:s ou H:i
+        // Remover zeros extras no final (ex: 12:30:000 -> 12:30:00)
+        $timeString = preg_replace('/:0+$/', '', $timeString); // Remove :000, :00 no final
+        $timeString = preg_replace('/:0+:/', ':', $timeString); // Remove zeros extras no meio
+        
+        // Validar formato básico (deve ter pelo menos H:i)
+        if (!preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $timeString)) {
+            return null;
+        }
+
+        // Garantir formato H:i:s (adicionar :00 se necessário)
+        $parts = explode(':', $timeString);
+        if (count($parts) === 2) {
+            $timeString .= ':00';
+        } elseif (count($parts) === 3) {
+            // Garantir que os segundos tenham 2 dígitos
+            $parts[2] = str_pad($parts[2], 2, '0', STR_PAD_LEFT);
+            $timeString = implode(':', $parts);
+        }
+
+        // Validar valores (hora 0-23, minuto 0-59, segundo 0-59)
+        $parts = explode(':', $timeString);
+        if (count($parts) === 3) {
+            $hour = (int) $parts[0];
+            $minute = (int) $parts[1];
+            $second = (int) $parts[2];
+            
+            if ($hour < 0 || $hour > 23 || $minute < 0 || $minute > 59 || $second < 0 || $second > 59) {
+                return null;
+            }
+        }
+
+        return $timeString;
     }
 }

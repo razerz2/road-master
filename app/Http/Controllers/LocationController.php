@@ -10,9 +10,22 @@ use Illuminate\Support\Facades\DB;
 
 class LocationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $locations = Location::orderBy('name')->paginate(20);
+        $query = Location::query();
+        
+        // Filtro de busca
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%")
+                  ->orWhere('state', 'like', "%{$search}%");
+            });
+        }
+        
+        $locations = $query->orderBy('name')->paginate(20)->withQueryString();
         return view('locations.index', compact('locations'));
     }
 

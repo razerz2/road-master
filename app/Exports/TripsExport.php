@@ -94,10 +94,9 @@ class TripsExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         $horarioSaida = '';
         if ($trip->departure_time) {
             try {
-                if (is_string($trip->departure_time)) {
-                    $horarioSaida = Carbon::parse($trip->departure_time)->format('H:i');
-                } else {
-                    $horarioSaida = $trip->departure_time->format('H:i');
+                $timeString = $this->formatTime($trip->departure_time);
+                if ($timeString) {
+                    $horarioSaida = Carbon::parse($timeString)->format('H:i');
                 }
             } catch (\Exception $e) {
                 $horarioSaida = '';
@@ -107,10 +106,9 @@ class TripsExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         $horarioChegada = '';
         if ($trip->return_time) {
             try {
-                if (is_string($trip->return_time)) {
-                    $horarioChegada = Carbon::parse($trip->return_time)->format('H:i');
-                } else {
-                    $horarioChegada = $trip->return_time->format('H:i');
+                $timeString = $this->formatTime($trip->return_time);
+                if ($timeString) {
+                    $horarioChegada = Carbon::parse($timeString)->format('H:i');
                 }
             } catch (\Exception $e) {
                 $horarioChegada = '';
@@ -204,6 +202,63 @@ class TripsExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     public function title(): string
     {
         return 'Plan1';
+    }
+
+    /**
+     * Formata um valor de time para o formato H:i:s válido
+     * Remove zeros extras e garante formato correto
+     */
+    private function formatTime($time)
+    {
+        if (empty($time)) {
+            return null;
+        }
+
+        // Se já for uma string, limpar e formatar
+        $timeString = (string) $time;
+        
+        // Remover espaços
+        $timeString = trim($timeString);
+        
+        // Se estiver vazio, retornar null
+        if (empty($timeString)) {
+            return null;
+        }
+
+        // Tentar diferentes formatos
+        // Formato esperado: H:i:s ou H:i
+        // Remover zeros extras no final (ex: 12:30:000 -> 12:30:00)
+        $timeString = preg_replace('/:0+$/', '', $timeString); // Remove :000, :00 no final
+        $timeString = preg_replace('/:0+:/', ':', $timeString); // Remove zeros extras no meio
+        
+        // Validar formato básico (deve ter pelo menos H:i)
+        if (!preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $timeString)) {
+            return null;
+        }
+
+        // Garantir formato H:i:s (adicionar :00 se necessário)
+        $parts = explode(':', $timeString);
+        if (count($parts) === 2) {
+            $timeString .= ':00';
+        } elseif (count($parts) === 3) {
+            // Garantir que os segundos tenham 2 dígitos
+            $parts[2] = str_pad($parts[2], 2, '0', STR_PAD_LEFT);
+            $timeString = implode(':', $parts);
+        }
+
+        // Validar valores (hora 0-23, minuto 0-59, segundo 0-59)
+        $parts = explode(':', $timeString);
+        if (count($parts) === 3) {
+            $hour = (int) $parts[0];
+            $minute = (int) $parts[1];
+            $second = (int) $parts[2];
+            
+            if ($hour < 0 || $hour > 23 || $minute < 0 || $minute > 59 || $second < 0 || $second > 59) {
+                return null;
+            }
+        }
+
+        return $timeString;
     }
 }
 
