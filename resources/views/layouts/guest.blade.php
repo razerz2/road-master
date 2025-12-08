@@ -5,7 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>
+            @php
+                $appName = \App\Models\SystemSetting::get('app_name') ?? config('app.name', 'Road Master');
+            @endphp
+            {{ $appName }}
+        </title>
 
         <!-- Favicon -->
         @php
