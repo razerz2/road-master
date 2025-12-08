@@ -4,11 +4,19 @@
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Detalhes do Veículo') }}
             </h2>
+            <div class="flex gap-2">
             @can('update', $vehicle)
+            <form action="{{ route('vehicles.adjust-odometer', $vehicle) }}" method="POST" class="inline" onsubmit="return confirm('Deseja ajustar o KM do veículo baseado em todos os percursos registrados?');">
+                @csrf
+                <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Ajustar KM
+                </button>
+            </form>
             <a href="{{ route('vehicles.edit', $vehicle) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Editar
             </a>
             @endcan
+            </div>
         </div>
     </x-slot>
 

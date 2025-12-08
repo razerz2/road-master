@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
 use App\Models\FuelType;
+use App\Models\Trip;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -133,5 +134,60 @@ class VehicleController extends Controller
 
         return redirect()->route('vehicles.index')
             ->with('success', 'Veículo removido com sucesso!');
+    }
+
+    /**
+     * Ajustar KM do veículo baseado em todos os percursos registrados
+     * Verifica todos os percursos do primeiro ao último e atualiza o odômetro
+     */
+    public function adjustOdometer(Vehicle $vehicle)
+    {
+        Gate::authorize('update', $vehicle);
+
+        // Buscar todos os percursos do veículo ordenados por data e hora
+        $trips = $vehicle->trips()
+            ->orderBy('date')
+            ->orderBy('departure_time')
+            ->get();
+
+        $oldOdometer = $vehicle->current_odometer ?? 0;
+        $kmInicial = $vehicle->km_inicial ?? 0;
+
+        if ($trips->isEmpty()) {
+            // Se não houver percursos, usar km_inicial ou manter current_odometer
+            $newOdometer = $kmInicial > 0 ? $kmInicial : $oldOdometer;
+        } else {
+            // Buscar o maior odometer_end dos percursos
+            $maxOdometer = $trips->max('odometer_end');
+
+            // Se não houver odometer_end válido, usar km_inicial ou manter current_odometer
+            if ($maxOdometer === null || $maxOdometer <= 0) {
+                $newOdometer = $kmInicial > 0 ? $kmInicial : $oldOdometer;
+            } else {
+                // Garantir que o odômetro nunca seja menor que o km_inicial
+                $newOdometer = max($maxOdometer, $kmInicial);
+            }
+        }
+
+        // Atualizar o odômetro do veículo
+        $vehicle->update(['current_odometer' => $newOdometer]);
+
+        $difference = $newOdometer - $oldOdometer;
+        $message = "KM do veículo ajustado com sucesso! ";
+        
+        if ($difference != 0) {
+            $message .= sprintf(
+                "Odômetro atualizado de %s km para %s km (%s%d km).",
+                number_format($oldOdometer, 0, ',', '.'),
+                number_format($newOdometer, 0, ',', '.'),
+                $difference > 0 ? '+' : '',
+                $difference
+            );
+        } else {
+            $message .= "Odômetro já estava correto (" . number_format($newOdometer, 0, ',', '.') . " km).";
+        }
+
+        return redirect()->route('vehicles.show', $vehicle)
+            ->with('success', $message);
     }
 }

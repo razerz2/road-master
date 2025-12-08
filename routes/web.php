@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Veículos
     Route::resource('vehicles', VehicleController::class);
+    Route::post('vehicles/{vehicle}/adjust-odometer', [VehicleController::class, 'adjustOdometer'])->name('vehicles.adjust-odometer');
 
     // Locais
     Route::resource('locations', LocationController::class);
