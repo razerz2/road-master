@@ -21,5 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('mandatory-events:check')->dailyAt('08:00');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Redirecionar erros 403 (não autorizado) para o dashboard com mensagem
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Você não tem permissão para realizar esta ação.'
+                ], 403);
+            }
+
+            return redirect()->route('dashboard')
+                ->with('error', 'Você não tem permissão para acessar esta página.');
+        });
     })->create();
