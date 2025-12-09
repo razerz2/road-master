@@ -368,7 +368,11 @@
                 const cancelBtn = document.getElementById('cancelBtn');
                 
                 if (!video) {
-                    alert('Erro ao inicializar a webcam. Tente novamente.');
+                    if (window.showToast) {
+                        window.showToast('Erro ao inicializar a webcam. Tente novamente.', 'error');
+                    } else {
+                        alert('Erro ao inicializar a webcam. Tente novamente.');
+                    }
                     closeWebcam();
                     return;
                 }
@@ -382,7 +386,11 @@
                         video.srcObject = stream;
                     })
                     .catch(function(err) {
-                        alert('Erro ao acessar a webcam: ' + err.message);
+                        if (window.showToast) {
+                            window.showToast('Erro ao acessar a webcam: ' + err.message, 'error');
+                        } else {
+                            alert('Erro ao acessar a webcam: ' + err.message);
+                        }
                         closeWebcam();
                     });
             }, 100);

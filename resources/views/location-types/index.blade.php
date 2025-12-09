@@ -94,7 +94,7 @@
                                                     method="POST" 
                                                     action="{{ route('location-types.destroy', $lt) }}" 
                                                     class="inline"
-                                                    onsubmit="return confirm('Tem certeza que deseja excluir este tipo de local?');"
+                                                    onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir este tipo de local?'); } else { if (confirm('Tem certeza que deseja excluir este tipo de local?')) { this.submit(); } }"
                                                 >
                                                     @csrf
                                                     @method('DELETE')

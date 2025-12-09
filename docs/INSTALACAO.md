@@ -19,7 +19,7 @@ Antes de começar, certifique-se de ter instalado:
   - XML
 - **Composer** (gerenciador de dependências PHP)
 - **Node.js** (versão 18 ou superior) e **NPM**
-- **SQLite** (para desenvolvimento) ou **MySQL/PostgreSQL** (para produção)
+- **MySQL** 5.7+ ou **MariaDB** 10.3+ (recomendado) ou **PostgreSQL** (alternativa)
 - **Git** (opcional, para controle de versão)
 
 ## 🚀 Instalação Passo a Passo
@@ -54,17 +54,17 @@ APP_KEY=
 APP_DEBUG=true
 APP_URL=http://localhost
 
-# Banco de Dados (SQLite para desenvolvimento)
-DB_CONNECTION=sqlite
-# DB_DATABASE=/caminho/para/database.sqlite
+# Banco de Dados (MySQL é o padrão)
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=road_master
+DB_USERNAME=root
+DB_PASSWORD=
 
-# Ou MySQL/PostgreSQL para produção
-# DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=road_master
-# DB_USERNAME=root
-# DB_PASSWORD=
+# Para usar SQLite (desenvolvimento local)
+# DB_CONNECTION=sqlite
+# DB_DATABASE=database/database.sqlite
 
 # Queue (para processamento em background)
 QUEUE_CONNECTION=database
@@ -78,20 +78,7 @@ php artisan key:generate
 
 ### 5. Configurar Banco de Dados
 
-#### Opção A: SQLite (Desenvolvimento)
-
-```bash
-# Criar arquivo do banco (se não existir)
-touch database/database.sqlite
-```
-
-No arquivo `.env`, certifique-se de que:
-```env
-DB_CONNECTION=sqlite
-# Comente ou remova DB_DATABASE, DB_USERNAME, DB_PASSWORD
-```
-
-#### Opção B: MySQL/PostgreSQL (Produção)
+#### Opção A: MySQL (Recomendado)
 
 1. Crie um banco de dados:
 ```sql
@@ -103,6 +90,37 @@ CREATE DATABASE road_master CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
+DB_DATABASE=road_master
+DB_USERNAME=seu_usuario
+DB_PASSWORD=sua_senha
+```
+
+#### Opção B: SQLite (Desenvolvimento Local)
+
+```bash
+# Criar arquivo do banco (se não existir)
+touch database/database.sqlite
+```
+
+No arquivo `.env`, configure:
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+# Comente ou remova DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD
+```
+
+#### Opção C: PostgreSQL (Alternativa)
+
+1. Crie um banco de dados:
+```sql
+CREATE DATABASE road_master;
+```
+
+2. Configure o `.env`:
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
 DB_DATABASE=road_master
 DB_USERNAME=seu_usuario
 DB_PASSWORD=sua_senha
@@ -209,25 +227,43 @@ php artisan test
 
 ## 🐛 Solução de Problemas
 
-### Erro: "SQLSTATE[HY000] [14] unable to open database file"
+### Erro: "SQLSTATE[HY000] [2002] No connection could be made"
 
-**Solução**: Certifique-se de que o arquivo `database/database.sqlite` existe e tem permissões de escrita.
+**Solução**: Verifique se o MySQL está rodando e se as credenciais no `.env` estão corretas.
 
 ```bash
-touch database/database.sqlite
-chmod 664 database/database.sqlite
+# Verificar se MySQL está rodando
+# Windows
+net start MySQL
+
+# Linux
+sudo systemctl status mysql
+
+# macOS
+brew services list
+```
+
+### Erro: "SQLSTATE[42000] [1049] Unknown database"
+
+**Solução**: Crie o banco de dados antes de executar as migrações:
+
+```sql
+CREATE DATABASE road_master CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### Erro: "Class 'PDO' not found"
 
-**Solução**: Instale a extensão PDO do PHP:
+**Solução**: Instale a extensão PDO do MySQL:
 
 ```bash
 # Ubuntu/Debian
-sudo apt-get install php-pdo php-sqlite3
+sudo apt-get install php-pdo php-mysql
 
 # macOS (Homebrew)
 brew install php@8.2
+
+# Windows (via XAMPP/WAMP)
+# Ative a extensão php_pdo_mysql.dll no php.ini
 ```
 
 ### Erro: "Vite manifest not found"

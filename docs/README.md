@@ -103,7 +103,7 @@ A documentação completa está organizada nos seguintes arquivos:
 - PHP 8.2 ou superior
 - Composer
 - Node.js e NPM
-- SQLite (desenvolvimento) ou MySQL/PostgreSQL (produção)
+- MySQL 5.7+ ou MariaDB 10.3+ (recomendado) ou PostgreSQL (alternativa)
 
 ### Instalação
 

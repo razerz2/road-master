@@ -33,6 +33,22 @@
                         </button>
                         <button 
                             type="button"
+                            @click="activeTab = 'appearance'"
+                            :class="activeTab === 'appearance' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
+                        >
+                            Aparência
+                        </button>
+                        <button 
+                            type="button"
+                            @click="activeTab = 'email'"
+                            :class="activeTab === 'email' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
+                        >
+                            Email
+                        </button>
+                        <button 
+                            type="button"
                             @click="activeTab = 'dashboard'"
                             :class="activeTab === 'dashboard' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
                             class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
@@ -41,11 +57,11 @@
                         </button>
                         <button 
                             type="button"
-                            @click="activeTab = 'appearance'"
-                            :class="activeTab === 'appearance' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                            @click="activeTab = 'profiles'"
+                            :class="activeTab === 'profiles' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
                             class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
                         >
-                            Aparência
+                            Perfis
                         </button>
                         <button 
                             type="button"
@@ -70,22 +86,6 @@
                             class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
                         >
                             Exportação
-                        </button>
-                        <button 
-                            type="button"
-                            @click="activeTab = 'profiles'"
-                            :class="activeTab === 'profiles' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
-                        >
-                            Perfis
-                        </button>
-                        <button 
-                            type="button"
-                            @click="activeTab = 'email'"
-                            :class="activeTab === 'email' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
-                        >
-                            Email
                         </button>
                     </nav>
                 </div>
@@ -1088,8 +1088,14 @@
     </div>
 
     <script>
-        function resetAppearance() {
-            if (confirm('Tem certeza que deseja redefinir as logos para o padrão do Laravel?')) {
+        async function resetAppearance() {
+            let confirmed = false;
+            if (window.showConfirm) {
+                confirmed = await window.showConfirm('Tem certeza que deseja redefinir as logos para o padrão do Laravel?', 'Redefinir Logos');
+            } else {
+                confirmed = confirm('Tem certeza que deseja redefinir as logos para o padrão do Laravel?');
+            }
+            if (confirmed) {
                 document.getElementById('resetAppearanceForm').submit();
             }
         }

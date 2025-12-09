@@ -12,6 +12,8 @@ class LocationController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Location::class);
+        
         $query = Location::query();
         
         // Filtro de busca
@@ -31,12 +33,16 @@ class LocationController extends Controller
 
     public function create()
     {
+        Gate::authorize('create', Location::class);
+        
         $locationTypes = LocationType::where('active', true)->orderBy('order')->orderBy('name')->get();
         return view('locations.create', compact('locationTypes'));
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('create', Location::class);
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:empresa,cliente,posto_combustivel,outro',
@@ -60,6 +66,8 @@ class LocationController extends Controller
 
     public function storeAjax(Request $request)
     {
+        Gate::authorize('create', Location::class);
+        
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -102,11 +110,15 @@ class LocationController extends Controller
 
     public function show(Location $location)
     {
+        Gate::authorize('view', $location);
+        
         return view('locations.show', compact('location'));
     }
 
     public function edit(Location $location)
     {
+        Gate::authorize('update', $location);
+        
         $locationTypes = LocationType::where('active', true)->orderBy('order')->orderBy('name')->get();
         $location->load('locationType');
         return view('locations.edit', compact('location', 'locationTypes'));
@@ -114,6 +126,8 @@ class LocationController extends Controller
 
     public function update(Request $request, Location $location)
     {
+        Gate::authorize('update', $location);
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:empresa,cliente,posto_combustivel,outro',
@@ -137,6 +151,8 @@ class LocationController extends Controller
 
     public function destroy(Location $location)
     {
+        Gate::authorize('delete', $location);
+        
         try {
             // Verificar se existem viagens que usam este local como origem
             $originTripsCount = $location->originTrips()->count();

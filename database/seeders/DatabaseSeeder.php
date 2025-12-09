@@ -45,7 +45,7 @@ class DatabaseSeeder extends Seeder
 
         // Criar usuário admin
         $admin = User::firstOrCreate(
-            ['email' => 'admin@sckv.com'],
+            ['email' => 'admin@roadmaster.com'],
             [
                 'name' => 'Administrador',
                 'password' => Hash::make('admin123'),
@@ -72,7 +72,7 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->command->info('Usuário admin criado com sucesso!');
-        $this->command->info('Email: admin@sckv.com');
+        $this->command->info('Email: admin@roadmaster.com');
         $this->command->info('Senha: admin123');
         $this->command->info('Módulos criados: ' . $allModules->count());
     }

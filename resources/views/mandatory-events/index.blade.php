@@ -120,7 +120,7 @@
                                                 @can('update', $event)
                                                 <form action="{{ route('mandatory-events.resolve', $event) }}" method="POST" class="inline mr-2">
                                                     @csrf
-                                                    <button type="submit" class="text-green-600 hover:text-green-900" onclick="return confirm('Marcar como pago?')">
+                                                    <button type="submit" class="text-green-600 hover:text-green-900" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleDelete === 'function') { handleDelete(form, 'Marcar como pago?'); } else { if (confirm('Marcar como pago?')) { form.submit(); } }">
                                                         Marcar como Pago
                                                     </button>
                                                 </form>
@@ -133,7 +133,7 @@
                                             <form action="{{ route('mandatory-events.destroy', $event) }}" method="POST" class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Tem certeza?')">Excluir</button>
+                                                <button type="submit" class="text-red-600 hover:text-red-900" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleDelete === 'function') { handleDelete(form, 'Tem certeza?'); } else { if (confirm('Tem certeza?')) { form.submit(); } }">Excluir</button>
                                             </form>
                                             @endcan
                                         </td>

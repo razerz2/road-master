@@ -94,7 +94,7 @@
                                                     method="POST" 
                                                     action="{{ route('fuel-types.destroy', $ft) }}" 
                                                     class="inline"
-                                                    onsubmit="return confirm('Tem certeza que deseja excluir este tipo de combustível?');"
+                                                    onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir este tipo de combustível?'); } else { if (confirm('Tem certeza que deseja excluir este tipo de combustível?')) { this.submit(); } }"
                                                 >
                                                     @csrf
                                                     @method('DELETE')

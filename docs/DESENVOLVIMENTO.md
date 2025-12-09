@@ -11,7 +11,7 @@ Este guia fornece informações para desenvolvedores que desejam contribuir ou e
 - PHP 8.2+
 - Composer
 - Node.js 18+
-- SQLite (desenvolvimento) ou MySQL/PostgreSQL
+- MySQL 5.7+ ou MariaDB 10.3+ (recomendado) ou PostgreSQL (alternativa)
 - Git
 
 ### Configuração Inicial
@@ -30,8 +30,18 @@ cp .env.example .env
 php artisan key:generate
 
 # Configurar banco de dados
-touch database/database.sqlite
-# Ou configure MySQL/PostgreSQL no .env
+# Crie o banco MySQL e configure no .env:
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=road_master
+# DB_USERNAME=root
+# DB_PASSWORD=
+# 
+# Ou use SQLite para desenvolvimento local:
+# touch database/database.sqlite
+# DB_CONNECTION=sqlite
+# DB_DATABASE=database/database.sqlite
 
 # Executar migrações
 php artisan migrate --seed

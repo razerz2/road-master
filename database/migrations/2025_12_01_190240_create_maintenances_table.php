@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('vehicle_id')->constrained()->onDelete('cascade');
             $table->date('date');
             $table->integer('odometer');
-            $table->string('type')->default('outro'); // SQLite não suporta enum, usar string
+            $table->string('type')->default('outro');
             $table->foreignId('maintenance_type_id')->nullable();
             $table->text('description');
             $table->string('provider')->nullable();

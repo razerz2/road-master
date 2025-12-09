@@ -102,10 +102,14 @@
                                     $isCondutor = ($currentRole === 'condutor' || $currentRole === 'motorista');
                                     $canChangeRole = !($isCurrentUser && $isAdmin);
                                 @endphp
+                                @if(!$canChangeRole)
+                                    {{-- Input hidden primeiro para garantir que o valor seja enviado --}}
+                                    <input type="hidden" name="role" value="{{ $currentRole }}">
+                                @endif
                                 <select 
                                     id="role" 
                                     name="role" 
-                                    class="block mt-1 w-full rounded-md border-gray-300 shadow-sm {{ !$canChangeRole ? 'opacity-50 cursor-not-allowed bg-gray-100' : '' }}" 
+                                    class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm {{ !$canChangeRole ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700' : '' }}" 
                                     required
                                     {{ !$canChangeRole ? 'disabled' : '' }}
                                 >
@@ -113,7 +117,6 @@
                                     <option value="admin" {{ $currentRole === 'admin' ? 'selected' : '' }}>Admin</option>
                                 </select>
                                 @if(!$canChangeRole)
-                                    <input type="hidden" name="role" value="{{ $currentRole }}">
                                     <p class="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
                                         Você não pode alterar seu próprio perfil de administrador.
                                     </p>
@@ -125,16 +128,22 @@
                             <div>
                                 @php
                                     $canDisable = !($isCurrentUser && $isAdmin);
+                                    $isActive = old('active', $user->active);
                                 @endphp
                                 <label class="flex items-center mt-6">
                                     <input 
                                         type="checkbox" 
                                         name="active" 
                                         value="1" 
-                                        {{ old('active', $user->active) ? 'checked' : '' }} 
+                                        {{ $isActive ? 'checked' : '' }} 
                                         class="rounded border-gray-300 {{ !$canDisable ? 'opacity-50 cursor-not-allowed' : '' }}"
                                         {{ !$canDisable ? 'disabled' : '' }}
+                                        id="active_checkbox"
                                     >
+                                    @if(!$canDisable)
+                                        {{-- Input hidden para garantir que o valor seja enviado quando desabilitado --}}
+                                        <input type="hidden" name="active" value="1">
+                                    @endif
                                     <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
                                         Ativo
                                         @if(!$canDisable)
@@ -357,7 +366,11 @@
                 const cancelBtn = document.getElementById('cancelBtn');
                 
                 if (!video) {
-                    alert('Erro ao inicializar a webcam. Tente novamente.');
+                    if (window.showToast) {
+                        window.showToast('Erro ao inicializar a webcam. Tente novamente.', 'error');
+                    } else {
+                        alert('Erro ao inicializar a webcam. Tente novamente.');
+                    }
                     closeWebcam();
                     return;
                 }
@@ -371,7 +384,11 @@
                         video.srcObject = stream;
                     })
                     .catch(function(err) {
-                        alert('Erro ao acessar a webcam: ' + err.message);
+                        if (window.showToast) {
+                            window.showToast('Erro ao acessar a webcam: ' + err.message, 'error');
+                        } else {
+                            alert('Erro ao acessar a webcam: ' + err.message);
+                        }
                         closeWebcam();
                     });
             }, 100);

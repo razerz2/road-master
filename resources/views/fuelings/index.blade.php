@@ -80,7 +80,7 @@
                                             <form action="{{ route('fuelings.destroy', $fueling) }}" method="POST" class="inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Tem certeza?')">Excluir</button>
+                                                <button type="submit" class="text-red-600 hover:text-red-900" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleDelete === 'function') { handleDelete(form, 'Tem certeza?'); } else { if (confirm('Tem certeza?')) { form.submit(); } }">Excluir</button>
                                             </form>
                                             @endcan
                                         </td>

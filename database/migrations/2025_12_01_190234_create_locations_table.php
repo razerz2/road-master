@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('type')->default('outro'); // SQLite não suporta enum, usar string
+            $table->string('type')->default('outro');
             $table->foreignId('location_type_id')->nullable();
             $table->text('address')->nullable();
             $table->string('street')->nullable();

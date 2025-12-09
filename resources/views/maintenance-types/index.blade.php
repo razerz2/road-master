@@ -94,7 +94,7 @@
                                                     method="POST" 
                                                     action="{{ route('maintenance-types.destroy', $mt) }}" 
                                                     class="inline"
-                                                    onsubmit="return confirm('Tem certeza que deseja excluir este tipo de manutenção?');"
+                                                    onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir este tipo de manutenção?'); } else { if (confirm('Tem certeza que deseja excluir este tipo de manutenção?')) { this.submit(); } }"
                                                 >
                                                     @csrf
                                                     @method('DELETE')

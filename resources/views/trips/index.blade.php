@@ -138,7 +138,7 @@
                                                 </a>
                                                 @endcan
                                                 @can('delete', $trip)
-                                                <form action="{{ route('trips.destroy', $trip) }}" method="POST" class="inline" onsubmit="return confirm('Tem certeza que deseja excluir este percurso?')">
+                                                <form action="{{ route('trips.destroy', $trip) }}" method="POST" class="inline" onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir este percurso?'); } else { if (confirm('Tem certeza que deseja excluir este percurso?')) { this.submit(); } }">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors" title="Excluir">

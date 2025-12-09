@@ -94,7 +94,7 @@
                                                     method="POST" 
                                                     action="{{ route('payment-methods.destroy', $pm) }}" 
                                                     class="inline"
-                                                    onsubmit="return confirm('Tem certeza que deseja excluir este método de pagamento?');"
+                                                    onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir este método de pagamento?'); } else { if (confirm('Tem certeza que deseja excluir este método de pagamento?')) { this.submit(); } }"
                                                 >
                                                     @csrf
                                                     @method('DELETE')

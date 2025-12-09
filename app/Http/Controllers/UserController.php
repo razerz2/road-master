@@ -154,12 +154,18 @@ class UserController extends Controller
     {
         Gate::authorize('update', $user);
 
+        // Se o role não foi enviado (campo desabilitado), usar o role atual do usuário
+        $roleValue = $request->input('role', $user->role);
+        
+        // Se o active não foi enviado (checkbox desabilitado), usar o valor atual
+        $activeValue = $request->has('active') ? ($request->input('active') == '1' || $request->input('active') === '1') : $user->active;
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_full' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'role' => 'required|in:admin,condutor',
-            'active' => 'boolean',
+            'active' => 'nullable|boolean',
             'avatar' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
             'avatar_base64' => 'nullable|string',
             'remove_avatar' => 'nullable|boolean',
@@ -171,6 +177,9 @@ class UserController extends Controller
             'vehicles' => 'nullable|array',
             'vehicles.*' => 'exists:vehicles,id',
         ]);
+        
+        // Garantir que o role seja o valor correto (do hidden input se desabilitado)
+        $validated['role'] = $roleValue;
 
         // Processar avatar
         $avatarPath = $user->avatar;
@@ -216,10 +225,19 @@ class UserController extends Controller
                 ->with('error', 'Você não pode alterar seu próprio perfil de administrador para condutor.');
         }
         
+        // Verificar se está tentando desativar (checkbox não marcado ou não enviado)
+        // Se o campo 'active' foi enviado, usar o valor; caso contrário, manter o valor atual
+        $wantsActive = $request->has('active') ? ($request->input('active') == '1' || $request->input('active') === '1' || $request->input('active') === 1) : $user->active;
+        
         // Impedir que admin desative sua própria conta
-        if ($isCurrentUser && $isAdmin && !$request->has('active')) {
-            return redirect()->back()
-                ->with('error', 'Você não pode desativar sua própria conta enquanto for administrador.');
+        // Se for o próprio admin, sempre deve estar ativo
+        if ($isCurrentUser && $isAdmin) {
+            if (!$wantsActive) {
+                return redirect()->back()
+                    ->with('error', 'Você não pode desativar sua própria conta enquanto for administrador.');
+            }
+            // Forçar ativo para o próprio admin
+            $wantsActive = true;
         }
 
         $updateData = [
@@ -230,12 +248,13 @@ class UserController extends Controller
             'avatar' => $avatarPath,
         ];
 
-        // Apenas atualizar 'active' se não for o próprio admin tentando desativar
-        if (!($isCurrentUser && $isAdmin)) {
-            $updateData['active'] = $request->has('active');
-        } else {
-            // Forçar ativo para o próprio admin
+        // Atualizar 'active' baseado na lógica de permissão
+        if ($isCurrentUser && $isAdmin) {
+            // Forçar ativo para o próprio admin (sempre true)
             $updateData['active'] = true;
+        } else {
+            // Para outros usuários, usar o valor do checkbox normalmente
+            $updateData['active'] = $wantsActive;
         }
 
         $user->update($updateData);

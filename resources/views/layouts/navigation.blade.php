@@ -31,6 +31,14 @@
                     </x-nav-link>
                     
                     <!-- Frota Dropdown -->
+                    @php
+                        $hasFleetAccess = Gate::allows('viewAny', App\Models\Vehicle::class) ||
+                                         Gate::allows('viewAny', App\Models\Fueling::class) ||
+                                         Gate::allows('viewAny', App\Models\Maintenance::class) ||
+                                         Gate::allows('viewAny', App\Models\ReviewNotification::class) ||
+                                         Gate::allows('viewAny', App\Models\VehicleMandatoryEvent::class);
+                    @endphp
+                    @if($hasFleetAccess)
                     <x-nav-dropdown :active="request()->routeIs('vehicles.*') || request()->routeIs('fuelings.*') || request()->routeIs('maintenances.*') || request()->routeIs('review-notifications.*') || request()->routeIs('mandatory-events.*')">
                         <x-slot name="trigger">
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,6 +47,7 @@
                             {{ __('Frota') }}
                         </x-slot>
                         <x-slot name="content">
+                            @can('viewAny', App\Models\Vehicle::class)
                             <x-nav-dropdown-link :href="route('vehicles.index')" :active="request()->routeIs('vehicles.*')">
                                 <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,6 +56,8 @@
                                     {{ __('Veículos') }}
                                 </div>
                             </x-nav-dropdown-link>
+                            @endcan
+                            @can('viewAny', App\Models\Fueling::class)
                             <x-nav-dropdown-link :href="route('fuelings.index')" :active="request()->routeIs('fuelings.*')">
                                 <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,6 +66,8 @@
                                     {{ __('Abastecimentos') }}
                                 </div>
                             </x-nav-dropdown-link>
+                            @endcan
+                            @can('viewAny', App\Models\Maintenance::class)
                             <x-nav-dropdown-link :href="route('maintenances.index')" :active="request()->routeIs('maintenances.*')">
                                 <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,6 +77,7 @@
                                     {{ __('Manutenções') }}
                                 </div>
                             </x-nav-dropdown-link>
+                            @endcan
                             @can('viewAny', App\Models\ReviewNotification::class)
                             <x-nav-dropdown-link :href="route('review-notifications.index')" :active="request()->routeIs('review-notifications.*')">
                                 <div class="flex items-center">
@@ -74,7 +88,7 @@
                                 </div>
                             </x-nav-dropdown-link>
                             @endcan
-                            @if(Auth::user()->role === 'admin' || Auth::user()->hasPermission('mandatory_events', 'view'))
+                            @can('viewAny', App\Models\VehicleMandatoryEvent::class)
                             <x-nav-dropdown-link :href="route('mandatory-events.index')" :active="request()->routeIs('mandatory-events.*')">
                                 <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,11 +97,17 @@
                                     {{ __('Obrigações Legais') }}
                                 </div>
                             </x-nav-dropdown-link>
-                            @endif
+                            @endcan
                         </x-slot>
                     </x-nav-dropdown>
+                    @endif
 
                     <!-- Operações Dropdown -->
+                    @php
+                        $hasOperationsAccess = Gate::allows('viewAny', App\Models\Trip::class) ||
+                                             Gate::allows('viewAny', App\Models\Location::class);
+                    @endphp
+                    @if($hasOperationsAccess)
                     <x-nav-dropdown :active="request()->routeIs('trips.*') || request()->routeIs('locations.*')">
                         <x-slot name="trigger">
                             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,6 +116,7 @@
                             {{ __('Operações') }}
                         </x-slot>
                         <x-slot name="content">
+                            @can('viewAny', App\Models\Trip::class)
                             <x-nav-dropdown-link :href="route('trips.index')" :active="request()->routeIs('trips.*')">
                                 <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,6 +125,8 @@
                                     {{ __('Percursos') }}
                                 </div>
                             </x-nav-dropdown-link>
+                            @endcan
+                            @can('viewAny', App\Models\Location::class)
                             <x-nav-dropdown-link :href="route('locations.index')" :active="request()->routeIs('locations.*')">
                                 <div class="flex items-center">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,8 +136,10 @@
                                     {{ __('Locais') }}
                                 </div>
                             </x-nav-dropdown-link>
+                            @endcan
                         </x-slot>
                     </x-nav-dropdown>
+                    @endif
 
                     @if(Auth::user()->role === 'admin' || Auth::user()->hasPermission('reports', 'view'))
                     <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
@@ -324,47 +349,72 @@
             </x-responsive-nav-link>
             
             <!-- Frota (Mobile) -->
+            @php
+                $hasFleetAccessMobile = Gate::allows('viewAny', App\Models\Vehicle::class) ||
+                                       Gate::allows('viewAny', App\Models\Fueling::class) ||
+                                       Gate::allows('viewAny', App\Models\Maintenance::class) ||
+                                       Gate::allows('viewAny', App\Models\ReviewNotification::class) ||
+                                       Gate::allows('viewAny', App\Models\VehicleMandatoryEvent::class);
+            @endphp
+            @if($hasFleetAccessMobile)
             <div class="px-3 py-2">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
                     {{ __('Frota') }}
                 </div>
                 <div class="ml-2 space-y-1">
+                    @can('viewAny', App\Models\Vehicle::class)
                     <x-responsive-nav-link :href="route('vehicles.index')" :active="request()->routeIs('vehicles.*')">
                         {{ __('Veículos') }}
                     </x-responsive-nav-link>
+                    @endcan
+                    @can('viewAny', App\Models\Fueling::class)
                     <x-responsive-nav-link :href="route('fuelings.index')" :active="request()->routeIs('fuelings.*')">
                         {{ __('Abastecimentos') }}
                     </x-responsive-nav-link>
+                    @endcan
+                    @can('viewAny', App\Models\Maintenance::class)
                     <x-responsive-nav-link :href="route('maintenances.index')" :active="request()->routeIs('maintenances.*')">
                         {{ __('Manutenções') }}
                     </x-responsive-nav-link>
+                    @endcan
                     @can('viewAny', App\Models\ReviewNotification::class)
                     <x-responsive-nav-link :href="route('review-notifications.index')" :active="request()->routeIs('review-notifications.*')">
                         {{ __('Notificações de Revisão') }}
                     </x-responsive-nav-link>
                     @endcan
-                    @if(Auth::user()->role === 'admin' || Auth::user()->hasPermission('mandatory_events', 'view'))
+                    @can('viewAny', App\Models\VehicleMandatoryEvent::class)
                     <x-responsive-nav-link :href="route('mandatory-events.index')" :active="request()->routeIs('mandatory-events.*')">
                         {{ __('Obrigações Legais') }}
                     </x-responsive-nav-link>
-                    @endif
+                    @endcan
                 </div>
             </div>
+            @endif
 
             <!-- Operações (Mobile) -->
+            @php
+                $hasOperationsAccessMobile = Gate::allows('viewAny', App\Models\Trip::class) ||
+                                           Gate::allows('viewAny', App\Models\Location::class);
+            @endphp
+            @if($hasOperationsAccessMobile)
             <div class="px-3 py-2">
                 <div class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
                     {{ __('Operações') }}
                 </div>
                 <div class="ml-2 space-y-1">
+                    @can('viewAny', App\Models\Trip::class)
                     <x-responsive-nav-link :href="route('trips.index')" :active="request()->routeIs('trips.*')">
                         {{ __('Percursos') }}
                     </x-responsive-nav-link>
+                    @endcan
+                    @can('viewAny', App\Models\Location::class)
                     <x-responsive-nav-link :href="route('locations.index')" :active="request()->routeIs('locations.*')">
                         {{ __('Locais') }}
                     </x-responsive-nav-link>
+                    @endcan
                 </div>
             </div>
+            @endif
 
             @if(Auth::user()->role === 'admin' || Auth::user()->hasPermission('reports', 'view'))
             <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">

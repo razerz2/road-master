@@ -6,7 +6,7 @@
             </h2>
             <div class="flex gap-2">
             @can('update', $vehicle)
-            <form action="{{ route('vehicles.adjust-odometer', $vehicle) }}" method="POST" class="inline" onsubmit="return confirm('Deseja ajustar o KM do veículo baseado em todos os percursos registrados?');">
+            <form action="{{ route('vehicles.adjust-odometer', $vehicle) }}" method="POST" class="inline" onsubmit="event.preventDefault(); handleAdjustOdometer(this);">
                 @csrf
                 <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                     Ajustar KM
@@ -107,5 +107,20 @@
             </div>
         </div>
     </div>
+
+    <script>
+        async function handleAdjustOdometer(form) {
+            if (window.showConfirm) {
+                const confirmed = await window.showConfirm('Deseja ajustar o KM do veículo baseado em todos os percursos registrados?', 'Ajustar KM');
+                if (confirmed) {
+                    form.submit();
+                }
+            } else {
+                if (confirm('Deseja ajustar o KM do veículo baseado em todos os percursos registrados?')) {
+                    form.submit();
+                }
+            }
+        }
+    </script>
 </x-app-layout>
 

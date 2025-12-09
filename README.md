@@ -11,7 +11,7 @@ O **Road Master** é uma aplicação web desenvolvida em Laravel para gerenciame
 - PHP 8.2 ou superior
 - Composer
 - Node.js e NPM
-- SQLite (desenvolvimento) ou MySQL/PostgreSQL (produção)
+- MySQL 5.7+ ou MariaDB 10.3+ (recomendado)
 
 ### Instalação Rápida
 
@@ -80,7 +80,7 @@ Toda a documentação do projeto está disponível na pasta `docs/`:
 
 - **Backend**: Laravel 12.x
 - **Frontend**: Blade Templates, TailwindCSS, Alpine.js
-- **Banco de Dados**: SQLite (dev) / MySQL/PostgreSQL (prod)
+- **Banco de Dados**: MySQL (padrão) / PostgreSQL (alternativa)
 - **Processamento**: Laravel Queue
 - **Importação**: Maatwebsite Excel
 - **PHP**: 8.2+

@@ -86,7 +86,7 @@
                 @can('update', $mandatoryEvent)
                 <form action="{{ route('mandatory-events.resolve', $mandatoryEvent) }}" method="POST" class="inline">
                     @csrf
-                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="return confirm('Marcar como pago?')">
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleDelete === 'function') { handleDelete(form, 'Marcar como pago?'); } else { if (confirm('Marcar como pago?')) { form.submit(); } }">
                         Marcar como Pago
                     </button>
                 </form>

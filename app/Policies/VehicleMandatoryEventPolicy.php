@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\VehicleMandatoryEvent;
 use Illuminate\Auth\Access\Response;
 
-class MandatoryEventPolicy
+class VehicleMandatoryEventPolicy
 {
     /**
      * Determine whether the user can view any models.

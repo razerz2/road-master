@@ -121,7 +121,7 @@
                             @endif
                         </div>
                         
-                        <form action="{{ route('notifications.destroy', $notification) }}" method="POST" class="inline" onsubmit="return confirm('Tem certeza que deseja excluir esta notificação?')">
+                        <form action="{{ route('notifications.destroy', $notification) }}" method="POST" class="inline" onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir esta notificação?'); } else { if (confirm('Tem certeza que deseja excluir esta notificação?')) { this.submit(); } }">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="inline-flex items-center px-4 py-2 text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-300 font-semibold rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">

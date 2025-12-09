@@ -537,7 +537,11 @@
                             }
                         });
                     } else if (data.message) {
-                        alert(data.message);
+                        if (window.showToast) {
+                            window.showToast(data.message, 'error');
+                        } else {
+                            alert(data.message);
+                        }
                     }
                 }
             })
@@ -563,10 +567,18 @@
                             }
                         });
                     } else if (errorData.message) {
-                        alert(errorData.message);
+                        if (window.showToast) {
+                            window.showToast(errorData.message, 'error');
+                        } else {
+                            alert(errorData.message);
+                        }
                     }
                 } catch (e) {
-                    alert('Erro ao cadastrar local. Tente novamente.');
+                    if (window.showToast) {
+                        window.showToast('Erro ao cadastrar local. Tente novamente.', 'error');
+                    } else {
+                        alert('Erro ao cadastrar local. Tente novamente.');
+                    }
                 }
             })
             .finally(() => {

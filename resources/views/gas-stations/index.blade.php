@@ -106,7 +106,7 @@
                                                     method="POST" 
                                                     action="{{ route('gas-stations.destroy', $gs) }}" 
                                                     class="inline"
-                                                    onsubmit="return confirm('Tem certeza que deseja excluir este posto?');"
+                                                    onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir este posto?'); } else { if (confirm('Tem certeza que deseja excluir este posto?')) { this.submit(); } }"
                                                 >
                                                     @csrf
                                                     @method('DELETE')
