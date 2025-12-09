@@ -30,6 +30,9 @@ class SettingsController extends Controller
             'maintenances' => SystemSetting::getGroup('maintenances'),
             'locations' => SystemSetting::getGroup('locations'),
             'email' => SystemSetting::getGroup('email'),
+            'reviews' => SystemSetting::getGroup('reviews'),
+            'mandatory_events' => SystemSetting::getGroup('mandatory_events'),
+            'notifications' => SystemSetting::getGroup('notifications'),
         ];
 
         // Valores padrão se não existirem
@@ -456,6 +459,102 @@ class SettingsController extends Controller
                 'message' => 'Erro ao enviar email de teste: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    // ========== CONFIGURAÇÕES DE REVISÃO E OBRIGAÇÕES LEGAIS ==========
+
+    public function updateReviewAndMandatoryEventSettings(Request $request)
+    {
+        Gate::authorize('viewAny', \App\Models\User::class);
+
+        $validated = $request->validate([
+            // Configurações de Revisão
+            'review_notification_km_before' => 'required|integer|min:0|max:100000',
+            'review_check_time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'review_notify_only_admins' => 'nullable|boolean',
+            
+            // Configurações de Obrigações Legais
+            'mandatory_event_days_before' => 'required|integer|min:1|max:365',
+            'mandatory_event_check_time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'mandatory_event_notify_only_admins' => 'nullable|boolean',
+            
+            // Configurações Gerais de Notificações
+            'notifications_enabled' => 'nullable|boolean',
+            'notification_check_frequency' => 'required|string|in:daily,weekly',
+        ], [
+            'review_check_time.regex' => 'O horário deve estar no formato HH:mm (ex: 08:00)',
+            'mandatory_event_check_time.regex' => 'O horário deve estar no formato HH:mm (ex: 08:00)',
+        ]);
+
+        // Salvar configurações de revisão
+        SystemSetting::set(
+            'review_notification_km_before',
+            (string)$validated['review_notification_km_before'],
+            'integer',
+            'reviews',
+            'KM de antecedência para notificar revisões'
+        );
+        
+        SystemSetting::set(
+            'review_check_time',
+            $validated['review_check_time'],
+            'string',
+            'reviews',
+            'Horário para verificar revisões'
+        );
+        
+        SystemSetting::set(
+            'review_notify_only_admins',
+            $request->has('review_notify_only_admins') ? '1' : '0',
+            'boolean',
+            'reviews',
+            'Notificar apenas administradores'
+        );
+
+        // Salvar configurações de obrigações legais
+        SystemSetting::set(
+            'mandatory_event_days_before',
+            (string)$validated['mandatory_event_days_before'],
+            'integer',
+            'mandatory_events',
+            'Dias de antecedência para notificar obrigações legais'
+        );
+        
+        SystemSetting::set(
+            'mandatory_event_check_time',
+            $validated['mandatory_event_check_time'],
+            'string',
+            'mandatory_events',
+            'Horário para verificar obrigações legais'
+        );
+        
+        SystemSetting::set(
+            'mandatory_event_notify_only_admins',
+            $request->has('mandatory_event_notify_only_admins') ? '1' : '0',
+            'boolean',
+            'mandatory_events',
+            'Notificar apenas administradores'
+        );
+
+        // Salvar configurações gerais de notificações
+        SystemSetting::set(
+            'notifications_enabled',
+            $request->has('notifications_enabled') ? '1' : '0',
+            'boolean',
+            'notifications',
+            'Habilitar notificações automáticas'
+        );
+        
+        SystemSetting::set(
+            'notification_check_frequency',
+            $validated['notification_check_frequency'],
+            'string',
+            'notifications',
+            'Frequência de verificação'
+        );
+
+        return redirect()->route('settings.index', ['activeTab' => 'notifications'])
+            ->with('success', 'Configurações de notificações atualizadas com sucesso!');
     }
 }
 

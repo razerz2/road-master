@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\VehicleMandatoryEvent;
 use App\Models\Vehicle;
 use App\Models\Notification;
+use App\Models\SystemSetting;
 use Illuminate\Console\Command;
 
 class CheckMandatoryEvents extends Command
@@ -28,7 +29,18 @@ class CheckMandatoryEvents extends Command
      */
     public function handle()
     {
+        // Verificar se notificações estão habilitadas
+        $notificationsEnabled = SystemSetting::get('notifications_enabled', '1') === '1';
+        if (!$notificationsEnabled) {
+            $this->info('Notificações automáticas estão desabilitadas nas configurações.');
+            return Command::SUCCESS;
+        }
+
         $this->info('Verificando obrigações legais próximas do vencimento...');
+
+        // Obter configurações
+        $daysBefore = (int) SystemSetting::get('mandatory_event_days_before', '10');
+        $notifyOnlyAdmins = SystemSetting::get('mandatory_event_notify_only_admins', '0') === '1';
 
         $notificationsSent = 0;
         $eventsChecked = 0;
@@ -36,7 +48,7 @@ class CheckMandatoryEvents extends Command
         // Buscar todas as obrigações não resolvidas e não notificadas
         $events = VehicleMandatoryEvent::where('resolved', false)
             ->where('notified', false)
-            ->whereDate('due_date', '<=', now()->addDays(10)) // notificar 10 dias antes
+            ->whereDate('due_date', '<=', now()->addDays($daysBefore))
             ->with('vehicle')
             ->get();
 
@@ -51,15 +63,23 @@ class CheckMandatoryEvents extends Command
 
             // Verificar se deve disparar notificação
             if ($event->shouldNotify()) {
-                // Buscar usuários relacionados ao veículo
-                $userIds = $vehicle->users()->pluck('users.id')->toArray();
-
-                // Se não houver usuários específicos, notificar todos os admins
-                if (empty($userIds)) {
+                // Buscar usuários para notificar
+                if ($notifyOnlyAdmins) {
                     $userIds = \App\Models\User::where('role', 'admin')
                         ->where('active', true)
                         ->pluck('id')
                         ->toArray();
+                } else {
+                    // Buscar usuários relacionados ao veículo
+                    $userIds = $vehicle->users()->pluck('users.id')->toArray();
+
+                    // Se não houver usuários específicos, notificar todos os admins
+                    if (empty($userIds)) {
+                        $userIds = \App\Models\User::where('role', 'admin')
+                            ->where('active', true)
+                            ->pluck('id')
+                            ->toArray();
+                    }
                 }
 
                 if (!empty($userIds)) {

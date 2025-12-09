@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\ReviewNotification;
 use App\Models\Vehicle;
 use App\Models\Notification;
+use App\Models\SystemSetting;
 use Illuminate\Console\Command;
 
 class CheckReviewNotifications extends Command
@@ -28,7 +29,18 @@ class CheckReviewNotifications extends Command
      */
     public function handle()
     {
+        // Verificar se notificações estão habilitadas
+        $notificationsEnabled = SystemSetting::get('notifications_enabled', '1') === '1';
+        if (!$notificationsEnabled) {
+            $this->info('Notificações automáticas estão desabilitadas nas configurações.');
+            return Command::SUCCESS;
+        }
+
         $this->info('Verificando notificações de revisão...');
+
+        // Obter configurações
+        $kmBefore = (int) SystemSetting::get('review_notification_km_before', '0');
+        $notifyOnlyAdmins = SystemSetting::get('review_notify_only_admins', '0') === '1';
 
         $notificationsSent = 0;
         $notificationsChecked = 0;
@@ -48,26 +60,48 @@ class CheckReviewNotifications extends Command
             }
 
             $currentOdometer = $vehicle->current_odometer ?? 0;
+            
+            // Ajustar KM de notificação considerando a antecedência configurada
+            $notificationKm = $reviewNotification->notification_km - $kmBefore;
 
-            // Verificar se deve disparar notificação
-            if ($reviewNotification->shouldNotify($currentOdometer)) {
-                // Buscar usuários relacionados ao veículo
-                $userIds = $vehicle->users()->pluck('users.id')->toArray();
+            // Verificar se deve disparar notificação (considerando antecedência)
+            $shouldNotify = $reviewNotification->active 
+                && $currentOdometer >= $notificationKm
+                && ($reviewNotification->last_notified_km === null || $currentOdometer > $reviewNotification->last_notified_km);
 
-                // Se não houver usuários específicos, notificar todos os admins
-                if (empty($userIds)) {
+            if ($shouldNotify) {
+                // Buscar usuários para notificar
+                if ($notifyOnlyAdmins) {
                     $userIds = \App\Models\User::where('role', 'admin')
                         ->where('active', true)
                         ->pluck('id')
                         ->toArray();
+                } else {
+                    // Buscar usuários relacionados ao veículo
+                    $userIds = $vehicle->users()->pluck('users.id')->toArray();
+
+                    // Se não houver usuários específicos, notificar todos os admins
+                    if (empty($userIds)) {
+                        $userIds = \App\Models\User::where('role', 'admin')
+                            ->where('active', true)
+                            ->pluck('id')
+                            ->toArray();
+                    }
                 }
 
                 if (!empty($userIds)) {
                     $reviewTypeName = $reviewNotification->review_type_name;
                     $name = $reviewNotification->name ?: $reviewTypeName;
                     
+                    // Mensagem com informação sobre antecedência
+                    $kmRemaining = $reviewNotification->notification_km - $currentOdometer;
+                    if ($kmRemaining > 0) {
+                        $message = "O veículo {$vehicle->name} ({$vehicle->plate}) está próximo de precisar de revisão: {$name}. Faltam {$kmRemaining} km para atingir o KM configurado ({$reviewNotification->notification_km} km). KM atual: {$currentOdometer} km.";
+                    } else {
+                        $message = "O veículo {$vehicle->name} ({$vehicle->plate}) atingiu {$currentOdometer} km e precisa de revisão: {$name}. KM configurado: {$reviewNotification->notification_km} km.";
+                    }
+                    
                     $title = "Revisão Necessária: {$name}";
-                    $message = "O veículo {$vehicle->name} ({$vehicle->plate}) atingiu {$currentOdometer} km e precisa de revisão: {$name}. KM configurado: {$reviewNotification->notification_km} km.";
                     $link = route('vehicles.show', $vehicle->id);
 
                     // Criar notificações para os usuários

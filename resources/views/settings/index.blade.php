@@ -87,6 +87,14 @@
                         >
                             Exportação
                         </button>
+                        <button 
+                            type="button"
+                            @click="activeTab = 'notifications'"
+                            :class="activeTab === 'notifications' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm"
+                        >
+                            Notificações
+                        </button>
                     </nav>
                 </div>
 
@@ -1189,6 +1197,217 @@
                                         </svg>
                                         <span x-text="testingEmail ? 'Enviando...' : 'Testar Configuração'"></span>
                                     </button>
+                                    <x-primary-button>
+                                        {{ __('Salvar Configurações') }}
+                                    </x-primary-button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab: Notificações -->
+                    <div x-show="activeTab === 'notifications'" x-transition>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-6">Configurações de Notificações Automáticas</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                            Configure as notificações automáticas de revisão e obrigações legais do sistema.
+                        </p>
+                        
+                        <form method="POST" action="{{ route('settings.updateReviewAndMandatoryEvents') }}">
+                            @csrf
+                            @method('PUT')
+                            
+                            <div class="space-y-6">
+                                <!-- Configurações Gerais -->
+                                <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-4">
+                                        🔔 Configurações Gerais
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="md:col-span-2">
+                                            <div class="flex items-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="notifications_enabled" 
+                                                    name="notifications_enabled" 
+                                                    value="1"
+                                                    class="rounded border-gray-300 dark:border-gray-700"
+                                                    {{ old('notifications_enabled', $settings['notifications']['notifications_enabled'] ?? '1') === '1' ? 'checked' : '' }}
+                                                >
+                                                <x-input-label for="notifications_enabled" :value="__('Habilitar Notificações Automáticas')" class="ml-2" />
+                                            </div>
+                                            <x-input-error :messages="$errors->get('notifications_enabled')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Quando habilitado, o sistema verificará automaticamente revisões e obrigações legais.
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <x-input-label for="notification_check_frequency" :value="__('Frequência de Verificação')" />
+                                            <select 
+                                                id="notification_check_frequency" 
+                                                name="notification_check_frequency" 
+                                                class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm"
+                                            >
+                                                <option value="daily" {{ old('notification_check_frequency', $settings['notifications']['notification_check_frequency'] ?? 'daily') === 'daily' ? 'selected' : '' }}>Diariamente</option>
+                                                <option value="weekly" {{ old('notification_check_frequency', $settings['notifications']['notification_check_frequency'] ?? 'daily') === 'weekly' ? 'selected' : '' }}>Semanalmente</option>
+                                            </select>
+                                            <x-input-error :messages="$errors->get('notification_check_frequency')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Com que frequência o sistema deve verificar notificações.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configurações de Revisão -->
+                                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-green-900 dark:text-green-100 mb-4">
+                                        🔧 Notificações de Revisão
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <x-input-label for="review_notification_km_before" :value="__('KM de Antecedência')" />
+                                            <x-text-input 
+                                                id="review_notification_km_before" 
+                                                class="block mt-1 w-full" 
+                                                type="number" 
+                                                name="review_notification_km_before" 
+                                                :value="old('review_notification_km_before', $settings['reviews']['review_notification_km_before'] ?? '0')" 
+                                                min="0" 
+                                                max="100000" 
+                                                required 
+                                            />
+                                            <x-input-error :messages="$errors->get('review_notification_km_before')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Quantos KM antes do KM configurado a notificação será enviada. Use 0 para notificar no KM exato.
+                                            </p>
+                                            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                                Exemplo: Se configurar 1000, a notificação será enviada quando o veículo atingir (KM configurado - 1000).
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <x-input-label for="review_check_time" :value="__('Horário de Verificação')" />
+                                            <x-text-input 
+                                                id="review_check_time" 
+                                                class="block mt-1 w-full" 
+                                                type="time" 
+                                                name="review_check_time" 
+                                                :value="old('review_check_time', $settings['reviews']['review_check_time'] ?? '08:00')" 
+                                                required 
+                                            />
+                                            <x-input-error :messages="$errors->get('review_check_time')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Horário em que o sistema verificará revisões diariamente.
+                                            </p>
+                                        </div>
+
+                                        <div class="md:col-span-2">
+                                            <div class="flex items-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="review_notify_only_admins" 
+                                                    name="review_notify_only_admins" 
+                                                    value="1"
+                                                    class="rounded border-gray-300 dark:border-gray-700"
+                                                    {{ old('review_notify_only_admins', $settings['reviews']['review_notify_only_admins'] ?? '0') === '1' ? 'checked' : '' }}
+                                                >
+                                                <x-input-label for="review_notify_only_admins" :value="__('Notificar Apenas Administradores')" class="ml-2" />
+                                            </div>
+                                            <x-input-error :messages="$errors->get('review_notify_only_admins')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Quando marcado, apenas administradores receberão notificações de revisão. Caso contrário, todos os usuários vinculados ao veículo serão notificados.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Configurações de Obrigações Legais -->
+                                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
+                                        ⚖️ Obrigações Legais (IPVA, Licenciamento, Multas)
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <x-input-label for="mandatory_event_days_before" :value="__('Dias de Antecedência')" />
+                                            <x-text-input 
+                                                id="mandatory_event_days_before" 
+                                                class="block mt-1 w-full" 
+                                                type="number" 
+                                                name="mandatory_event_days_before" 
+                                                :value="old('mandatory_event_days_before', $settings['mandatory_events']['mandatory_event_days_before'] ?? '10')" 
+                                                min="1" 
+                                                max="365" 
+                                                required 
+                                            />
+                                            <x-input-error :messages="$errors->get('mandatory_event_days_before')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Quantos dias antes do vencimento a notificação será enviada.
+                                            </p>
+                                            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                                Exemplo: Se configurar 10, a notificação será enviada 10 dias antes do vencimento.
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <x-input-label for="mandatory_event_check_time" :value="__('Horário de Verificação')" />
+                                            <x-text-input 
+                                                id="mandatory_event_check_time" 
+                                                class="block mt-1 w-full" 
+                                                type="time" 
+                                                name="mandatory_event_check_time" 
+                                                :value="old('mandatory_event_check_time', $settings['mandatory_events']['mandatory_event_check_time'] ?? '08:00')" 
+                                                required 
+                                            />
+                                            <x-input-error :messages="$errors->get('mandatory_event_check_time')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Horário em que o sistema verificará obrigações legais diariamente.
+                                            </p>
+                                        </div>
+
+                                        <div class="md:col-span-2">
+                                            <div class="flex items-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="mandatory_event_notify_only_admins" 
+                                                    name="mandatory_event_notify_only_admins" 
+                                                    value="1"
+                                                    class="rounded border-gray-300 dark:border-gray-700"
+                                                    {{ old('mandatory_event_notify_only_admins', $settings['mandatory_events']['mandatory_event_notify_only_admins'] ?? '0') === '1' ? 'checked' : '' }}
+                                                >
+                                                <x-input-label for="mandatory_event_notify_only_admins" :value="__('Notificar Apenas Administradores')" class="ml-2" />
+                                            </div>
+                                            <x-input-error :messages="$errors->get('mandatory_event_notify_only_admins')" class="mt-2" />
+                                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                                Quando marcado, apenas administradores receberão notificações de obrigações legais. Caso contrário, todos os usuários vinculados ao veículo serão notificados.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Informações Adicionais -->
+                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                                    <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                                        ℹ️ Informações Importantes
+                                    </h4>
+                                    <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                                        <p>
+                                            <strong>Verificação Automática:</strong> Os comandos são executados automaticamente pelo agendador do Laravel (cron/scheduler).
+                                        </p>
+                                        <p>
+                                            <strong>Verificação Manual:</strong> Você pode executar manualmente a qualquer momento:
+                                        </p>
+                                        <ul class="list-disc list-inside ml-4 space-y-1">
+                                            <li><code>php artisan reviews:check</code> - Verificar revisões</li>
+                                            <li><code>php artisan mandatory-events:check</code> - Verificar obrigações legais</li>
+                                        </ul>
+                                        <p>
+                                            <strong>Nota:</strong> As alterações de horário requerem que o agendador seja atualizado. O sistema tentará ajustar automaticamente, mas pode ser necessário reiniciar o scheduler.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
                                     <x-primary-button>
                                         {{ __('Salvar Configurações') }}
                                     </x-primary-button>

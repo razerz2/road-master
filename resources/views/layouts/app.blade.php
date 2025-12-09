@@ -38,6 +38,20 @@
                     document.documentElement.classList.remove('dark');
                 }
             })();
+
+            // Tratamento de erro 419 (PAGE EXPIRED)
+            // Interceptar erros de formulário e recarregar a página se necessário
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (form.tagName === 'FORM' && form.method.toUpperCase() === 'POST') {
+                    form.addEventListener('error', function(event) {
+                        if (event.detail && event.detail.status === 419) {
+                            alert('Sua sessão expirou. A página será recarregada.');
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
         </script>
     </head>
     <body class="font-sans antialiased bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">

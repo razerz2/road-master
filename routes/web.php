@@ -21,6 +21,11 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+// Rota para atualizar CSRF token (evita erro 419)
+Route::get('/refresh-csrf', function () {
+    return response()->json(['token' => csrf_token()]);
+})->middleware('web');
+
 // Rota para servir arquivos do storage (fallback se o link simbólico não existir)
 // Esta rota deve estar ANTES do middleware de autenticação para ser pública
 // Usando uma rota alternativa para evitar conflitos com o servidor web
@@ -144,6 +149,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/driver-default-modules', [SettingsController::class, 'updateDriverDefaultModules'])->name('updateDriverDefaultModules');
         Route::put('/email-settings', [SettingsController::class, 'updateEmailSettings'])->name('updateEmailSettings');
         Route::post('/email-settings/test', [SettingsController::class, 'testEmailSettings'])->name('testEmailSettings');
+        Route::put('/review-and-mandatory-events', [SettingsController::class, 'updateReviewAndMandatoryEventSettings'])->name('updateReviewAndMandatoryEvents');
     });
 
     // Tipos de Combustível (apenas admin)

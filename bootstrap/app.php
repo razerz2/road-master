@@ -15,10 +15,26 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // Verificar notificações de revisão diariamente às 8h
-        $schedule->command('reviews:check')->dailyAt('08:00');
-        // Verificar obrigações legais diariamente às 8h
-        $schedule->command('mandatory-events:check')->dailyAt('08:00');
+        // Obter configurações de horário (com fallback para 08:00)
+        $reviewCheckTime = \App\Models\SystemSetting::get('review_check_time', '08:00');
+        $mandatoryEventCheckTime = \App\Models\SystemSetting::get('mandatory_event_check_time', '08:00');
+        
+        // Verificar frequência de verificação
+        $checkFrequency = \App\Models\SystemSetting::get('notification_check_frequency', 'daily');
+        
+        // Agendar verificação de revisões
+        if ($checkFrequency === 'daily') {
+            $schedule->command('reviews:check')->dailyAt($reviewCheckTime);
+        } else {
+            $schedule->command('reviews:check')->weeklyOn(1, $reviewCheckTime); // Segunda-feira
+        }
+        
+        // Agendar verificação de obrigações legais
+        if ($checkFrequency === 'daily') {
+            $schedule->command('mandatory-events:check')->dailyAt($mandatoryEventCheckTime);
+        } else {
+            $schedule->command('mandatory-events:check')->weeklyOn(1, $mandatoryEventCheckTime); // Segunda-feira
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Redirecionar erros 403 (não autorizado) para o dashboard com mensagem intuitiva
