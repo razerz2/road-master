@@ -25,6 +25,10 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- PWA Manifest -->
+        <link rel="manifest" href="/manifest.webmanifest">
+        <meta name="theme-color" content="#0ea5e9">
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         
@@ -301,6 +305,14 @@
                     };
                 }, 100);
             });
+        </script>
+
+        <!-- Service Worker Registration -->
+        <script>
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.register("/service-worker.js")
+                    .catch(err => console.warn("SW error:", err));
+            }
         </script>
     </body>
 </html>

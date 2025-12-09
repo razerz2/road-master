@@ -21,6 +21,9 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+// Rota de fallback offline para PWA
+Route::view('/offline', 'offline')->name('offline');
+
 // Rota para atualizar CSRF token (evita erro 419)
 Route::get('/refresh-csrf', function () {
     return response()->json(['token' => csrf_token()]);
