@@ -470,20 +470,20 @@ class SettingsController extends Controller
         $validated = $request->validate([
             // Configurações de Revisão
             'review_notification_km_before' => 'required|integer|min:0|max:100000',
-            'review_check_time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'review_check_time' => 'required|date_format:H:i',
             'review_notify_only_admins' => 'nullable|boolean',
             
             // Configurações de Obrigações Legais
             'mandatory_event_days_before' => 'required|integer|min:1|max:365',
-            'mandatory_event_check_time' => 'required|string|regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/',
+            'mandatory_event_check_time' => 'required|date_format:H:i',
             'mandatory_event_notify_only_admins' => 'nullable|boolean',
             
             // Configurações Gerais de Notificações
             'notifications_enabled' => 'nullable|boolean',
             'notification_check_frequency' => 'required|string|in:daily,weekly',
         ], [
-            'review_check_time.regex' => 'O horário deve estar no formato HH:mm (ex: 08:00)',
-            'mandatory_event_check_time.regex' => 'O horário deve estar no formato HH:mm (ex: 08:00)',
+            'review_check_time.date_format' => 'O horário deve estar no formato HH:mm (ex: 08:00)',
+            'mandatory_event_check_time.date_format' => 'O horário deve estar no formato HH:mm (ex: 08:00)',
         ]);
 
         // Salvar configurações de revisão
