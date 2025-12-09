@@ -142,6 +142,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/dashboard-preferences', [SettingsController::class, 'updateDashboardPreferences'])->name('updateDashboardPreferences');
         Route::put('/driver-default-modules', [SettingsController::class, 'updateDriverDefaultModules'])->name('updateDriverDefaultModules');
         Route::put('/email-settings', [SettingsController::class, 'updateEmailSettings'])->name('updateEmailSettings');
+        Route::post('/email-settings/test', [SettingsController::class, 'testEmailSettings'])->name('testEmailSettings');
     });
 
     // Tipos de Combustível (apenas admin)

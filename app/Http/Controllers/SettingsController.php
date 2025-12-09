@@ -6,10 +6,13 @@ use App\Models\Module;
 use App\Models\UserModulePermission;
 use App\Models\SystemSetting;
 use App\Models\Vehicle;
+use App\Helpers\EnvHelper;
+use App\Mail\TestEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -328,19 +331,131 @@ class SettingsController extends Controller
     {
         Gate::authorize('viewAny', \App\Models\User::class);
 
+        $emailEnabled = $request->has('email_notifications_enabled') && $request->email_notifications_enabled === '1';
+
         $validated = $request->validate([
             'email_notifications_enabled' => 'nullable|boolean',
-            'email_from_address' => 'required|email',
-            'email_from_name' => 'required|string|max:255',
+            'email_from_address' => $emailEnabled ? 'required|email' : 'nullable|email',
+            'email_from_name' => $emailEnabled ? 'required|string|max:255' : 'nullable|string|max:255',
+            'mail_mailer' => $emailEnabled ? 'required|string|in:smtp,sendmail,log' : 'nullable',
+            'mail_host' => $emailEnabled ? 'required|string|max:255' : 'nullable',
+            'mail_port' => $emailEnabled ? 'required|integer|min:1|max:65535' : 'nullable',
+            'mail_encryption' => 'nullable|string|in:tls,ssl',
+            'mail_username' => 'nullable|string|max:255',
+            'mail_password' => 'nullable|string|max:255',
         ]);
 
-        // Salvar configurações de email
-        SystemSetting::set('email_notifications_enabled', $validated['email_notifications_enabled'] ? '1' : '0', 'boolean', 'email', 'Habilitar notificações por email');
+        // Salvar configurações de email no banco
+        SystemSetting::set('email_notifications_enabled', $emailEnabled ? '1' : '0', 'boolean', 'email', 'Habilitar notificações por email');
         SystemSetting::set('email_from_address', $validated['email_from_address'], 'string', 'email', 'Endereço de email remetente');
         SystemSetting::set('email_from_name', $validated['email_from_name'], 'string', 'email', 'Nome do remetente');
 
+        // Se notificações de email estão habilitadas, atualizar configurações SMTP no .env
+        if ($emailEnabled) {
+            $envUpdates = [
+                'MAIL_MAILER' => $validated['mail_mailer'] ?? 'smtp',
+                'MAIL_HOST' => $validated['mail_host'] ?? '',
+                'MAIL_PORT' => (string)($validated['mail_port'] ?? '587'),
+            ];
+
+            // Adicionar criptografia se fornecida
+            if (!empty($validated['mail_encryption'])) {
+                $envUpdates['MAIL_ENCRYPTION'] = $validated['mail_encryption'];
+            } else {
+                // Remover MAIL_ENCRYPTION se não fornecida
+                $envUpdates['MAIL_ENCRYPTION'] = '';
+            }
+
+            // Adicionar username se fornecido
+            if (!empty($validated['mail_username'])) {
+                $envUpdates['MAIL_USERNAME'] = $validated['mail_username'];
+            }
+
+            // Adicionar password apenas se fornecido (para não sobrescrever senha existente)
+            // Não incluir no array se vazio para não remover a senha existente
+            if (!empty($request->mail_password)) {
+                $envUpdates['MAIL_PASSWORD'] = $request->mail_password;
+            }
+
+            // Atualizar MAIL_FROM_ADDRESS e MAIL_FROM_NAME no .env também
+            $envUpdates['MAIL_FROM_ADDRESS'] = $validated['email_from_address'];
+            $envUpdates['MAIL_FROM_NAME'] = $validated['email_from_name'];
+
+            // Atualizar arquivo .env
+            try {
+                EnvHelper::updateMultipleEnv($envUpdates);
+            } catch (\Exception $e) {
+                return redirect()->route('settings.index', ['activeTab' => 'email'])
+                    ->with('error', 'Erro ao atualizar arquivo .env: ' . $e->getMessage());
+            }
+        }
+
         return redirect()->route('settings.index', ['activeTab' => 'email'])
             ->with('success', 'Configurações de email atualizadas com sucesso!');
+    }
+
+    /**
+     * Testar configurações de email
+     */
+    public function testEmailSettings(Request $request)
+    {
+        Gate::authorize('viewAny', \App\Models\User::class);
+
+        try {
+            $user = Auth::user();
+            
+            if (!$user->email) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Você não possui um email cadastrado. Por favor, adicione um email no seu perfil antes de testar.',
+                ], 400);
+            }
+
+            // Obter configurações do formulário ou do banco/env
+            $fromAddress = $request->input('email_from_address') 
+                ?? SystemSetting::get('email_from_address') 
+                ?? config('mail.from.address', 'noreply@example.com');
+            
+            $fromName = $request->input('email_from_name') 
+                ?? SystemSetting::get('email_from_name') 
+                ?? config('mail.from.name', config('app.name', 'Road Master'));
+
+            // Se o usuário forneceu configurações SMTP no formulário, atualizar temporariamente
+            if ($request->has('mail_host') && !empty($request->input('mail_host'))) {
+                // Atualizar configurações temporariamente usando Config
+                config([
+                    'mail.mailers.smtp.host' => $request->input('mail_host'),
+                    'mail.mailers.smtp.port' => $request->input('mail_port', 587),
+                    'mail.mailers.smtp.username' => $request->input('mail_username', ''),
+                    'mail.mailers.smtp.password' => $request->input('mail_password', ''),
+                    'mail.mailers.smtp.encryption' => $request->input('mail_encryption', 'tls'),
+                    'mail.default' => $request->input('mail_mailer', 'smtp'),
+                ]);
+                
+                // Limpar cache de configuração para garantir que as novas configurações sejam usadas
+                if (app()->bound('config')) {
+                    app('config')->set('mail.mailers.smtp.host', $request->input('mail_host'));
+                    app('config')->set('mail.mailers.smtp.port', $request->input('mail_port', 587));
+                    app('config')->set('mail.mailers.smtp.username', $request->input('mail_username', ''));
+                    app('config')->set('mail.mailers.smtp.password', $request->input('mail_password', ''));
+                    app('config')->set('mail.mailers.smtp.encryption', $request->input('mail_encryption', 'tls'));
+                    app('config')->set('mail.default', $request->input('mail_mailer', 'smtp'));
+                }
+            }
+
+            // Enviar email de teste usando o mailer padrão
+            Mail::to($user->email)->send(new TestEmail($fromAddress, $fromName));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email de teste enviado com sucesso! Verifique sua caixa de entrada.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao enviar email de teste: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }
 

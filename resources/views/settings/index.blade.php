@@ -774,7 +774,70 @@
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-data="{ 
+                                    emailEnabled: {{ old('email_notifications_enabled', $settings['email']['email_notifications_enabled'] ?? '0') === '1' ? 'true' : 'false' }},
+                                    testingEmail: false,
+                                    testMessage: '',
+                                    testMessageType: '',
+                                    async testEmailConfiguration() {
+                                        if (!this.emailEnabled) {
+                                            return;
+                                        }
+                                        
+                                        this.testingEmail = true;
+                                        this.testMessage = '';
+                                        this.testMessageType = '';
+                                        
+                                        // Coletar dados do formulário
+                                        const formData = {
+                                            email_from_address: document.getElementById('email_from_address').value,
+                                            email_from_name: document.getElementById('email_from_name').value,
+                                            mail_mailer: document.getElementById('mail_mailer').value,
+                                            mail_host: document.getElementById('mail_host').value,
+                                            mail_port: document.getElementById('mail_port').value,
+                                            mail_encryption: document.getElementById('mail_encryption').value,
+                                            mail_username: document.getElementById('mail_username').value,
+                                            mail_password: document.getElementById('mail_password').value,
+                                        };
+                                        
+                                        try {
+                                            const response = await fetch('{{ route('settings.testEmailSettings') }}', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                },
+                                                body: JSON.stringify(formData),
+                                            });
+                                            
+                                            const data = await response.json();
+                                            
+                                            this.testMessage = data.message;
+                                            this.testMessageType = data.success ? 'success' : 'error';
+                                            
+                                            // Scroll para a mensagem
+                                            setTimeout(() => {
+                                                const messageDiv = document.getElementById('test-email-message');
+                                                if (messageDiv) {
+                                                    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                                }
+                                            }, 100);
+                                            
+                                            // Limpar mensagem após 10 segundos
+                                            if (data.success) {
+                                                setTimeout(() => {
+                                                    this.testMessage = '';
+                                                    this.testMessageType = '';
+                                                }, 10000);
+                                            }
+                                        } catch (error) {
+                                            this.testMessage = 'Erro ao testar configuração: ' + error.message;
+                                            this.testMessageType = 'error';
+                                        } finally {
+                                            this.testingEmail = false;
+                                        }
+                                    }
+                                }">
                                     <div class="md:col-span-2">
                                         <div class="flex items-center">
                                             <input 
@@ -782,6 +845,7 @@
                                                 id="email_notifications_enabled" 
                                                 name="email_notifications_enabled" 
                                                 value="1"
+                                                x-model="emailEnabled"
                                                 class="rounded border-gray-300 dark:border-gray-700"
                                                 {{ old('email_notifications_enabled', $settings['email']['email_notifications_enabled'] ?? '0') === '1' ? 'checked' : '' }}
                                             >
@@ -798,10 +862,12 @@
                                         <x-text-input 
                                             id="email_from_address" 
                                             class="block mt-1 w-full" 
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
                                             type="email" 
                                             name="email_from_address" 
                                             :value="old('email_from_address', $settings['email']['email_from_address'] ?? config('mail.from.address', 'noreply@example.com'))" 
-                                            required 
+                                            :disabled="!emailEnabled"
+                                            x-bind:required="emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('email_from_address')" class="mt-2" />
                                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -814,19 +880,201 @@
                                         <x-text-input 
                                             id="email_from_name" 
                                             class="block mt-1 w-full" 
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
                                             type="text" 
                                             name="email_from_name" 
                                             :value="old('email_from_name', $settings['email']['email_from_name'] ?? config('mail.from.name', $settings['general']['app_name'] ?? 'Road Master'))" 
-                                            required 
+                                            :disabled="!emailEnabled"
+                                            x-bind:required="emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('email_from_name')" class="mt-2" />
                                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                             Nome que aparecerá como remetente nas notificações.
                                         </p>
                                     </div>
+
+                                    <!-- Mensagem de resultado do teste -->
+                                    <div id="test-email-message" x-show="testMessage" x-transition class="md:col-span-2">
+                                        <div 
+                                            x-bind:class="{
+                                                'bg-green-100 dark:bg-green-800 border-green-400 dark:border-green-600 text-green-700 dark:text-green-300': testMessageType === 'success',
+                                                'bg-red-100 dark:bg-red-800 border-red-400 dark:border-red-600 text-red-700 dark:text-red-300': testMessageType === 'error'
+                                            }"
+                                            class="border px-4 py-3 rounded relative mb-4"
+                                            role="alert"
+                                        >
+                                            <span class="block sm:inline" x-text="testMessage"></span>
+                                            <button 
+                                                @click="testMessage = ''; testMessageType = ''"
+                                                class="absolute top-0 bottom-0 right-0 px-4 py-3"
+                                            >
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mensagem de resultado do teste -->
+                                    <div id="test-email-message" x-show="testMessage" x-transition class="md:col-span-2">
+                                        <div 
+                                            x-bind:class="{
+                                                'bg-green-100 dark:bg-green-800 border-green-400 dark:border-green-600 text-green-700 dark:text-green-300': testMessageType === 'success',
+                                                'bg-red-100 dark:bg-red-800 border-red-400 dark:border-red-600 text-red-700 dark:text-red-300': testMessageType === 'error'
+                                            }"
+                                            class="border px-4 py-3 rounded relative mb-4"
+                                            role="alert"
+                                        >
+                                            <span class="block sm:inline" x-text="testMessage"></span>
+                                            <button 
+                                                @click="testMessage = ''; testMessageType = ''"
+                                                class="absolute top-0 bottom-0 right-0 px-4 py-3"
+                                            >
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Configurações SMTP -->
+                                    <div class="md:col-span-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <h4 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-4">Configurações do Servidor SMTP</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                            Configure as informações do servidor de email. Essas configurações serão salvas no arquivo <code>.env</code> do sistema.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="mail_mailer" :value="__('Tipo de Mailer')" />
+                                        <select 
+                                            id="mail_mailer" 
+                                            name="mail_mailer" 
+                                            class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm"
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            :disabled="!emailEnabled"
+                                            x-bind:required="emailEnabled"
+                                        >
+                                            <option value="smtp" {{ old('mail_mailer', env('MAIL_MAILER', 'smtp')) === 'smtp' ? 'selected' : '' }}>SMTP</option>
+                                            <option value="sendmail" {{ old('mail_mailer', env('MAIL_MAILER')) === 'sendmail' ? 'selected' : '' }}>Sendmail</option>
+                                            <option value="log" {{ old('mail_mailer', env('MAIL_MAILER')) === 'log' ? 'selected' : '' }}>Log (apenas para testes)</option>
+                                        </select>
+                                        <x-input-error :messages="$errors->get('mail_mailer')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Tipo de mailer utilizado para envio de emails.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="mail_host" :value="__('Servidor SMTP')" />
+                                        <x-text-input 
+                                            id="mail_host" 
+                                            class="block mt-1 w-full" 
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            type="text" 
+                                            name="mail_host" 
+                                            :value="old('mail_host', env('MAIL_HOST', 'smtp.mailtrap.io'))" 
+                                            :disabled="!emailEnabled"
+                                            x-bind:required="emailEnabled"
+                                        />
+                                        <x-input-error :messages="$errors->get('mail_host')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Endereço do servidor SMTP (ex: smtp.gmail.com, smtp.mailtrap.io).
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="mail_port" :value="__('Porta do Servidor')" />
+                                        <x-text-input 
+                                            id="mail_port" 
+                                            class="block mt-1 w-full" 
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            type="number" 
+                                            name="mail_port" 
+                                            :value="old('mail_port', env('MAIL_PORT', '2525'))" 
+                                            :disabled="!emailEnabled"
+                                            x-bind:required="emailEnabled"
+                                        />
+                                        <x-input-error :messages="$errors->get('mail_port')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Porta do servidor SMTP (geralmente 587 para TLS, 465 para SSL, ou 2525 para Mailtrap).
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="mail_encryption" :value="__('Tipo de Criptografia')" />
+                                        <select 
+                                            id="mail_encryption" 
+                                            name="mail_encryption" 
+                                            class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm"
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            :disabled="!emailEnabled"
+                                        >
+                                            <option value="">Nenhuma</option>
+                                            <option value="tls" {{ old('mail_encryption', env('MAIL_ENCRYPTION', 'tls')) === 'tls' ? 'selected' : '' }}>TLS</option>
+                                            <option value="ssl" {{ old('mail_encryption', env('MAIL_ENCRYPTION')) === 'ssl' ? 'selected' : '' }}>SSL</option>
+                                        </select>
+                                        <x-input-error :messages="$errors->get('mail_encryption')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Tipo de criptografia utilizada (TLS é recomendado para porta 587, SSL para porta 465).
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="mail_username" :value="__('Usuário do Email')" />
+                                        <x-text-input 
+                                            id="mail_username" 
+                                            class="block mt-1 w-full" 
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            type="text" 
+                                            name="mail_username" 
+                                            :value="old('mail_username', env('MAIL_USERNAME', ''))" 
+                                            :disabled="!emailEnabled"
+                                        />
+                                        <x-input-error :messages="$errors->get('mail_username')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Nome de usuário para autenticação no servidor SMTP.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <x-input-label for="mail_password" :value="__('Senha do Email')" />
+                                        <x-text-input 
+                                            id="mail_password" 
+                                            class="block mt-1 w-full" 
+                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            type="password" 
+                                            name="mail_password" 
+                                            :value="''" 
+                                            :disabled="!emailEnabled"
+                                            placeholder="Deixe em branco para manter a senha atual"
+                                        />
+                                        <x-input-error :messages="$errors->get('mail_password')" class="mt-2" />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Senha para autenticação no servidor SMTP. Deixe em branco para manter a senha atual.
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <div class="flex items-center justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+                                    <button 
+                                        type="button"
+                                        id="test-email-btn"
+                                        x-show="emailEnabled"
+                                        x-transition
+                                        @click="testEmailConfiguration()"
+                                        class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150"
+                                        :disabled="testingEmail"
+                                    >
+                                        <svg x-show="!testingEmail" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                        </svg>
+                                        <svg x-show="testingEmail" class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span x-text="testingEmail ? 'Enviando...' : 'Testar Configuração'"></span>
+                                    </button>
                                     <x-primary-button>
                                         {{ __('Salvar Configurações') }}
                                     </x-primary-button>
