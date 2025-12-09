@@ -862,11 +862,11 @@
                                         <x-text-input 
                                             id="email_from_address" 
                                             class="block mt-1 w-full" 
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="email" 
                                             name="email_from_address" 
                                             :value="old('email_from_address', $settings['email']['email_from_address'] ?? config('mail.from.address', 'noreply@example.com'))" 
-                                            :disabled="!emailEnabled"
+                                            x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('email_from_address')" class="mt-2" />
@@ -880,11 +880,11 @@
                                         <x-text-input 
                                             id="email_from_name" 
                                             class="block mt-1 w-full" 
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="text" 
                                             name="email_from_name" 
                                             :value="old('email_from_name', $settings['email']['email_from_name'] ?? config('mail.from.name', $settings['general']['app_name'] ?? 'Road Master'))" 
-                                            :disabled="!emailEnabled"
+                                            x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('email_from_name')" class="mt-2" />
@@ -951,8 +951,8 @@
                                             id="mail_mailer" 
                                             name="mail_mailer" 
                                             class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm"
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
-                                            :disabled="!emailEnabled"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
+                                            x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         >
                                             <option value="smtp" {{ old('mail_mailer', env('MAIL_MAILER', 'smtp')) === 'smtp' ? 'selected' : '' }}>SMTP</option>
@@ -970,11 +970,11 @@
                                         <x-text-input 
                                             id="mail_host" 
                                             class="block mt-1 w-full" 
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="text" 
                                             name="mail_host" 
                                             :value="old('mail_host', env('MAIL_HOST', 'smtp.mailtrap.io'))" 
-                                            :disabled="!emailEnabled"
+                                            x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('mail_host')" class="mt-2" />
@@ -988,11 +988,11 @@
                                         <x-text-input 
                                             id="mail_port" 
                                             class="block mt-1 w-full" 
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="number" 
                                             name="mail_port" 
                                             :value="old('mail_port', env('MAIL_PORT', '2525'))" 
-                                            :disabled="!emailEnabled"
+                                            x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('mail_port')" class="mt-2" />
@@ -1007,8 +1007,8 @@
                                             id="mail_encryption" 
                                             name="mail_encryption" 
                                             class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm"
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
-                                            :disabled="!emailEnabled"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
+                                            x-bind:disabled="!emailEnabled"
                                         >
                                             <option value="">Nenhuma</option>
                                             <option value="tls" {{ old('mail_encryption', env('MAIL_ENCRYPTION', 'tls')) === 'tls' ? 'selected' : '' }}>TLS</option>
@@ -1025,11 +1025,11 @@
                                         <x-text-input 
                                             id="mail_username" 
                                             class="block mt-1 w-full" 
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="text" 
                                             name="mail_username" 
                                             :value="old('mail_username', env('MAIL_USERNAME', ''))" 
-                                            :disabled="!emailEnabled"
+                                            x-bind:disabled="!emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('mail_username')" class="mt-2" />
                                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -1042,11 +1042,11 @@
                                         <x-text-input 
                                             id="mail_password" 
                                             class="block mt-1 w-full" 
-                                            :class="{'opacity-50 cursor-not-allowed': !emailEnabled}"
+                                            x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="password" 
                                             name="mail_password" 
                                             :value="''" 
-                                            :disabled="!emailEnabled"
+                                            x-bind:disabled="!emailEnabled"
                                             placeholder="Deixe em branco para manter a senha atual"
                                         />
                                         <x-input-error :messages="$errors->get('mail_password')" class="mt-2" />
