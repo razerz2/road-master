@@ -69,6 +69,26 @@
                                 </label>
                                 <x-input-error :messages="$errors->get('active')" class="mt-2" />
                             </div>
+
+                            <div class="md:col-span-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="recurring" value="1" {{ old('recurring') ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" id="recurring-checkbox">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        {{ __('Criar automaticamente próxima revisão ao marcar como realizada') }}
+                                    </span>
+                                </label>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ __('Quando marcado, ao marcar esta revisão como realizada, será criada automaticamente uma nova revisão com o intervalo configurado abaixo.') }}
+                                </p>
+                                <x-input-error :messages="$errors->get('recurring')" class="mt-2" />
+                            </div>
+
+                            <div class="md:col-span-2" id="recurrence-interval-field" style="display: none;">
+                                <x-input-label for="recurrence_interval_km" :value="__('Intervalo de Recorrência (KM)')" />
+                                <x-text-input id="recurrence_interval_km" class="block mt-1 w-full" type="number" name="recurrence_interval_km" :value="old('recurrence_interval_km')" min="1" />
+                                <p class="mt-1 text-sm text-gray-500">Ex: Se a revisão foi feita em 15.000 km e o intervalo é 10.000 km, a próxima será em 25.000 km</p>
+                                <x-input-error :messages="$errors->get('recurrence_interval_km')" class="mt-2" />
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-end mt-6">
@@ -92,6 +112,23 @@
                 currentKmInput.value = odometer;
             }
         }
+
+        // Mostrar/ocultar campo de intervalo quando checkbox de recorrência é alterado
+        document.addEventListener('DOMContentLoaded', function() {
+            const recurringCheckbox = document.getElementById('recurring-checkbox');
+            const intervalField = document.getElementById('recurrence-interval-field');
+            
+            if (recurringCheckbox && intervalField) {
+                recurringCheckbox.addEventListener('change', function() {
+                    intervalField.style.display = this.checked ? 'block' : 'none';
+                });
+                
+                // Verificar estado inicial
+                if (recurringCheckbox.checked) {
+                    intervalField.style.display = 'block';
+                }
+            }
+        });
     </script>
 </x-app-layout>
 

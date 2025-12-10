@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Schema;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Schedule $schedule): void {
+        // Verificar se a tabela system_settings existe antes de tentar acessá-la
+        // Isso evita erros durante a execução de migrações
+        if (!Schema::hasTable('system_settings')) {
+            return;
+        }
+        
         // Obter configurações de horário (com fallback para 08:00)
         $reviewCheckTime = \App\Models\SystemSetting::get('review_check_time', '08:00');
         $mandatoryEventCheckTime = \App\Models\SystemSetting::get('mandatory_event_check_time', '08:00');

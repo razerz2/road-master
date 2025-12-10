@@ -7,16 +7,25 @@
 
         <title>
             @php
-                $appName = \App\Models\SystemSetting::get('app_name') ?? config('app.name', 'Road Master');
+                try {
+                    $appName = \App\Models\SystemSetting::get('app_name') ?? config('app.name', 'Road Master');
+                } catch (\Exception $e) {
+                    $appName = config('app.name', 'Road Master');
+                }
             @endphp
             {{ $appName }}
         </title>
 
         <!-- Favicon -->
         @php
-            $faviconPath = \App\Models\SystemSetting::get('system_favicon');
-            $faviconUrl = $faviconPath ? route('storage.serve', ['path' => $faviconPath]) : asset('favicon.ico');
-            $faviconType = $faviconPath ? (pathinfo($faviconPath, PATHINFO_EXTENSION) === 'svg' ? 'image/svg+xml' : (pathinfo($faviconPath, PATHINFO_EXTENSION) === 'png' ? 'image/png' : 'image/x-icon')) : 'image/x-icon';
+            try {
+                $faviconPath = \App\Models\SystemSetting::get('system_favicon');
+                $faviconUrl = $faviconPath ? route('storage.serve', ['path' => $faviconPath]) : asset('favicon.ico');
+                $faviconType = $faviconPath ? (pathinfo($faviconPath, PATHINFO_EXTENSION) === 'svg' ? 'image/svg+xml' : (pathinfo($faviconPath, PATHINFO_EXTENSION) === 'png' ? 'image/png' : 'image/x-icon')) : 'image/x-icon';
+            } catch (\Exception $e) {
+                $faviconUrl = asset('favicon.ico');
+                $faviconType = 'image/x-icon';
+            }
         @endphp
         <link rel="icon" type="{{ $faviconType }}" href="{{ $faviconUrl }}">
 
@@ -32,8 +41,12 @@
             <div>
                 <a href="/">
                     @php
-                        $logoPath = \App\Models\SystemSetting::get('system_logo');
-                        $logoUrl = $logoPath ? route('storage.serve', ['path' => $logoPath]) : null;
+                        try {
+                            $logoPath = \App\Models\SystemSetting::get('system_logo');
+                            $logoUrl = $logoPath ? route('storage.serve', ['path' => $logoPath]) : null;
+                        } catch (\Exception $e) {
+                            $logoUrl = null;
+                        }
                     @endphp
                     @if($logoUrl)
                         <img src="{{ $logoUrl }}" alt="{{ config('app.name', 'Laravel') }}" class="w-20 h-20 object-contain">

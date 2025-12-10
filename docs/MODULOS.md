@@ -11,11 +11,13 @@ Este documento descreve em detalhes cada módulo do sistema Road Master.
 5. [Abastecimentos](#abastecimentos)
 6. [Manutenções](#manutenções)
 7. [Notificações de Revisão](#notificações-de-revisão)
-8. [Relatórios](#relatórios)
-9. [Importação](#importação)
-10. [Usuários](#usuários)
-11. [Configurações](#configurações)
-12. [Notificações](#notificações)
+8. [Obrigações Legais](#obrigações-legais)
+9. [Postos de Combustível](#postos-de-combustível)
+10. [Relatórios](#relatórios)
+11. [Importação](#importação)
+12. [Usuários](#usuários)
+13. [Configurações](#configurações)
+14. [Notificações](#notificações)
 
 ---
 
@@ -359,6 +361,77 @@ Para mais detalhes, consulte:
 
 ---
 
+## 📋 Obrigações Legais
+
+**Rota Base**: `/mandatory-events`  
+**Controller**: `MandatoryEventController`  
+**View**: `resources/views/mandatory-events/`
+
+### Funcionalidades
+
+Gestão de obrigações legais dos veículos (IPVA, Licenciamento, Multas).
+
+### Campos do Cadastro
+
+- **Veículo**: Veículo relacionado
+- **Tipo**: Tipo de obrigação (IPVA, Licenciamento, Multa)
+- **Descrição**: Descrição da obrigação
+- **Data de Vencimento**: Data limite para cumprimento
+- **Valor**: Valor da obrigação (opcional)
+- **Status**: Status (pendente, resolvido)
+- **Observações**: Notas adicionais
+
+### Operações
+
+- **Listar**: Visualizar todas as obrigações
+- **Criar**: Cadastrar nova obrigação
+- **Editar**: Atualizar informações
+- **Excluir**: Remover obrigação
+- **Marcar como Resolvido**: Alterar status para resolvido
+
+### Tipos de Obrigações
+
+- **IPVA**: Imposto sobre Propriedade de Veículos Automotores
+- **Licenciamento**: Licenciamento anual do veículo
+- **Multa**: Multas de trânsito
+
+### Alertas
+
+O sistema pode gerar alertas para obrigações próximas do vencimento (se configurado).
+
+---
+
+## 🏪 Postos de Combustível
+
+**Rota Base**: `/gas-stations`  
+**Controller**: `GasStationController`  
+**View**: `resources/views/gas-stations/`
+
+### Funcionalidades
+
+Cadastro e gestão de postos de combustível.
+
+### Campos do Cadastro
+
+- **Nome**: Nome do posto
+- **Endereço**: Endereço completo
+- **Cidade**: Cidade
+- **Estado**: Estado (UF)
+- **Observações**: Notas adicionais
+
+### Operações
+
+- **Listar**: Visualizar todos os postos
+- **Criar**: Cadastrar novo posto
+- **Editar**: Atualizar informações
+- **Excluir**: Remover posto
+
+### Uso
+
+Postos são referenciados nos registros de abastecimento.
+
+---
+
 ## 📊 Relatórios
 
 **Rota Base**: `/reports`  
@@ -371,6 +444,8 @@ Geração de relatórios e análises.
 
 ### Relatórios Disponíveis
 
+Todos os relatórios possuem opção de exportação para Excel (`.xlsx`) e PDF.
+
 #### 1. KM por Veículo
 
 **Rota**: `/reports/km-by-vehicle`
@@ -378,27 +453,124 @@ Geração de relatórios e análises.
 - KM rodado por veículo em um período
 - Filtros: período, veículo
 - Exibição em tabela
+- Exportação Excel/PDF
 
-#### 2. Custo de Combustível por Veículo
+#### 2. Consumo Médio
+
+**Rota**: `/reports/consumo`
+
+- Cálculo de consumo médio por veículo
+- Filtros: período, veículo
+- Exportação Excel/PDF
+
+#### 3. Custo de Combustível
+
+**Rota**: `/reports/fuel-cost`
+
+- Análise de custos de combustível
+- Filtros: período, veículo
+- Exportação Excel/PDF
+
+#### 4. Custo de Combustível por Veículo
 
 **Rota**: `/reports/fuel-cost-by-vehicle`
 
 - Custo total de combustível por veículo
 - Filtros: período, veículo
 - Exibição em tabela
+- Exportação Excel/PDF
 
-#### 3. Manutenções
+#### 5. Abastecimentos
+
+**Rota**: `/reports/fuelings`
+
+- Histórico completo de abastecimentos
+- Filtros: período, veículo, tipo de combustível
+- Exportação Excel/PDF
+
+#### 6. Manutenções
 
 **Rota**: `/reports/maintenances`
 
 - Histórico de manutenções
 - Filtros: período, veículo, tipo
 - Exibição em tabela
+- Exportação Excel/PDF
+
+#### 7. Manutenções Detalhadas
+
+**Rota**: `/reports/maintenances-detailed`
+
+- Relatório detalhado de manutenções
+- Informações completas por veículo
+- Exportação Excel/PDF
+
+#### 8. Manutenções Programadas
+
+**Rota**: `/reports/upcoming-maintenance`
+
+- Manutenções próximas (por data e KM)
+- Alertas de manutenções pendentes
+- Exportação Excel/PDF
+
+#### 9. Uso por Condutor
+
+**Rota**: `/reports/driver-usage`
+
+- Análise de uso por condutor
+- KM e atividades por motorista
+- Exportação Excel/PDF
+
+#### 10. Auditoria de Odômetro
+
+**Rota**: `/reports/odometer-audit`
+
+- Histórico de alterações no odômetro
+- Verificação de consistência
+- Exportação Excel/PDF
+
+#### 11. Rotas e Paradas
+
+**Rota**: `/reports/routes-stops`
+
+- Análise de rotas mais utilizadas
+- Paradas intermediárias
+- Exportação Excel/PDF
+
+#### 12. Ranking
+
+**Rota**: `/reports/ranking`
+
+- Ranking de veículos por diversos critérios
+- Comparações entre veículos
+- Exportação Excel/PDF
+
+#### 13. Relatório Consolidado
+
+**Rota**: `/reports/consolidated`
+
+- Visão consolidada de todos os dados
+- Métricas gerais da frota
+- Exportação Excel/PDF
+
+#### 14. Revisões
+
+**Rota**: `/reports/reviews`
+
+- Relatório de revisões e notificações
+- Status das revisões programadas
+- Exportação Excel/PDF
 
 ### Permissões
 
 - **Admin**: Acesso a todos os relatórios
 - **Condutor**: Relatórios apenas dos veículos vinculados
+
+### Exportação
+
+Todos os relatórios suportam:
+- **Excel** (`.xlsx`): Exportação completa para planilhas
+- **PDF**: Geração de documento PDF formatado
 
 ---
 
@@ -420,28 +592,34 @@ Importação em massa de percursos via arquivo Excel.
 4. **Acompanhamento**: Usuário acompanha progresso em tempo real
 5. **Conclusão**: Notificação de conclusão
 
-### Requisitos do Arquivo
+### Tipos de Importação
+
+#### 1. Importação de Percursos
 
 - **Formato**: `.xlsx` ou `.xls`
 - **Estrutura**: Múltiplas abas suportadas
 - **Colunas**: Seguir formato padrão
+- **Campos Obrigatórios**: Ano, Veículo
 
-### Campos Obrigatórios
+#### 2. Importação de Locais
 
-- Ano
-- Veículo
+- **Rota**: `/importacao/locais`
+- Importação em massa de locais via Excel
+- Validação de dados
 
-### Progresso
+### Funcionalidades Adicionais
 
-- Barra de progresso em tempo real
-- Logs de processamento
-- Status: processando, concluído, erro
+- **Exportar Modelo**: Baixar arquivo Excel com estrutura esperada
+- **Acompanhamento de Progresso**: Barra de progresso em tempo real
+- **Logs de Processamento**: Histórico detalhado
+- **Status**: processando, concluído, erro
 
 ### Processamento em Background
 
 - Utiliza Laravel Queue
 - Não bloqueia a interface
 - Permite múltiplas importações simultâneas
+- Logs detalhados de cada importação
 
 ---
 
@@ -524,21 +702,48 @@ Configurações gerais do sistema (apenas admin).
 
 - Gerenciar tipos de combustível
 - CRUD completo
+- Vinculação com veículos
 
 #### 5. Métodos de Pagamento
 
 - Gerenciar métodos de pagamento
 - CRUD completo
+- Usado em abastecimentos
 
 #### 6. Tipos de Manutenção
 
 - Gerenciar tipos de manutenção
 - CRUD completo
+- Classificação de manutenções
 
 #### 7. Tipos de Local
 
 - Gerenciar tipos de local
 - CRUD completo
+- Categorização de locais
+
+#### 8. Postos de Combustível
+
+- Gerenciar postos de gasolina
+- CRUD completo
+- Referenciado em abastecimentos
+
+#### 9. Módulos Padrão para Condutores
+
+- Configurar módulos visíveis por padrão para condutores
+- Personalização de acesso inicial
+
+#### 10. Configurações de Email
+
+- Configuração de servidor SMTP
+- Teste de envio de email
+- Personalização de templates
+
+#### 11. Revisões e Obrigações Legais
+
+- Configurações de notificações de revisão
+- Alertas de obrigações legais
+- Personalização de avisos
 
 ---
 
@@ -604,6 +809,8 @@ Cada módulo tem uma Policy que controla o acesso:
 - `UserPolicy`
 - `ReviewNotificationPolicy`
 - `SettingsPolicy`
+- `VehicleMandatoryEventPolicy`
+- `LocationPolicy`
 
 ### Middleware
 

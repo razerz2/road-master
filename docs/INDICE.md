@@ -22,6 +22,7 @@ Documentação da arquitetura do sistema:
 - Camadas da aplicação
 - Padrões de design
 - Processamento em background
+- Sistema de importação e exportação
 - Sistema de notificações
 
 ### [MODULOS.md](MODULOS.md)
@@ -33,7 +34,9 @@ Documentação detalhada de cada módulo do sistema:
 - Abastecimentos
 - Manutenções
 - Notificações de Revisão
-- Relatórios
+- Obrigações Legais
+- Postos de Combustível
+- Relatórios (mais de 15 relatórios disponíveis)
 - Importação
 - Usuários
 - Configurações
@@ -129,12 +132,16 @@ Detalhamento técnico de como funciona o sistema de notificações:
 ### Por Funcionalidade
 
 - **Veículos**: [MODULOS.md#veículos](MODULOS.md#veículos)
+- **Locais**: [MODULOS.md#locais](MODULOS.md#locais)
 - **Percursos**: [MODULOS.md#percursos](MODULOS.md#percursos)
 - **Abastecimentos**: [MODULOS.md#abastecimentos](MODULOS.md#abastecimentos)
 - **Manutenções**: [MODULOS.md#manutenções](MODULOS.md#manutenções)
-- **Notificações**: [MODULOS.md#notificações-de-revisão](MODULOS.md#notificações-de-revisão)
+- **Notificações de Revisão**: [MODULOS.md#notificações-de-revisão](MODULOS.md#notificações-de-revisão)
+- **Obrigações Legais**: [MODULOS.md#obrigações-legais](MODULOS.md#obrigações-legais)
+- **Postos de Combustível**: [MODULOS.md#postos-de-combustível](MODULOS.md#postos-de-combustível)
 - **Relatórios**: [MODULOS.md#relatórios](MODULOS.md#relatórios)
 - **Importação**: [MODULOS.md#importação](MODULOS.md#importação)
+- **Configurações**: [MODULOS.md#configurações](MODULOS.md#configurações)
 
 ### Por Tópico Técnico
 

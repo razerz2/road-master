@@ -137,15 +137,9 @@
                                     
                                     <!-- Ações -->
                                     <div class="flex items-center space-x-2 ml-4">
-                                        @if($notification->link)
-                                            <a href="{{ $notification->link }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
-                                                Ver
-                                            </a>
-                                        @else
-                                            <a href="{{ route('notifications.show', $notification) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
-                                                Ver
-                                            </a>
-                                        @endif
+                                        <a href="{{ route('notifications.show', $notification) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors">
+                                            Ver
+                                        </a>
                                         <form action="{{ route('notifications.destroy', $notification) }}" method="POST" class="inline" onsubmit="event.preventDefault(); if (typeof handleDelete === 'function') { handleDelete(this, 'Tem certeza que deseja excluir esta notificação?'); } else { if (confirm('Tem certeza que deseja excluir esta notificação?')) { this.submit(); } }">
                                             @csrf
                                             @method('DELETE')

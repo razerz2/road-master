@@ -1,9 +1,9 @@
+/* Import CSS personalizado para navegação */
+@import './navigation.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import CSS personalizado para navegação */
-@import './navigation.css';
 
 @layer components {
     .card {

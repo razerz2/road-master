@@ -64,12 +64,26 @@ class ReviewNotificationController extends Controller
             'notification_km' => 'required|integer|min:0',
             'active' => 'boolean',
             'description' => 'nullable|string',
+            'recurring' => 'nullable|boolean',
+            'recurrence_interval_km' => 'nullable|integer|min:1',
         ]);
 
         // Se current_km não foi informado, usar o odômetro atual do veículo
         if (empty($validated['current_km'])) {
             $vehicle = Vehicle::findOrFail($validated['vehicle_id']);
             $validated['current_km'] = $vehicle->current_odometer ?? 0;
+        }
+
+        // Garantir que active seja boolean
+        // Se o checkbox não estiver marcado, não vem no request, então precisa tratar explicitamente
+        $validated['active'] = $request->has('active') && $request->active == '1';
+        
+        // Garantir que recurring seja boolean
+        $validated['recurring'] = $request->has('recurring') && $request->recurring == '1';
+        
+        // Se recurring está marcado mas não tem intervalo, usar a diferença entre notification_km e current_km
+        if ($validated['recurring'] && empty($validated['recurrence_interval_km'])) {
+            $validated['recurrence_interval_km'] = $validated['notification_km'] - $validated['current_km'];
         }
 
         ReviewNotification::create($validated);
@@ -118,12 +132,26 @@ class ReviewNotificationController extends Controller
             'notification_km' => 'required|integer|min:0',
             'active' => 'boolean',
             'description' => 'nullable|string',
+            'recurring' => 'nullable|boolean',
+            'recurrence_interval_km' => 'nullable|integer|min:1',
         ]);
 
         // Se current_km não foi informado, usar o odômetro atual do veículo
         if (empty($validated['current_km'])) {
             $vehicle = Vehicle::findOrFail($validated['vehicle_id']);
             $validated['current_km'] = $vehicle->current_odometer ?? 0;
+        }
+
+        // Garantir que active seja boolean
+        // Se o checkbox não estiver marcado, não vem no request, então precisa tratar explicitamente
+        $validated['active'] = $request->has('active') && $request->active == '1';
+
+        // Garantir que recurring seja boolean
+        $validated['recurring'] = $request->has('recurring') && $request->recurring == '1';
+        
+        // Se recurring está marcado mas não tem intervalo, usar a diferença entre notification_km e current_km
+        if ($validated['recurring'] && empty($validated['recurrence_interval_km'])) {
+            $validated['recurrence_interval_km'] = $validated['notification_km'] - $validated['current_km'];
         }
 
         $reviewNotification->update($validated);
@@ -160,5 +188,34 @@ class ReviewNotificationController extends Controller
             ->with('success', $reviewNotification->active 
                 ? 'Revisão ativada com sucesso!' 
                 : 'Revisão desativada com sucesso!');
+    }
+
+    /**
+     * Marcar revisão como realizada
+     */
+    public function markAsCompleted(Request $request, ReviewNotification $reviewNotification)
+    {
+        Gate::authorize('update', $reviewNotification);
+
+        $validated = $request->validate([
+            'completed_km' => 'nullable|integer|min:0',
+        ]);
+
+        $completedKm = $validated['completed_km'] ?? $reviewNotification->vehicle->current_odometer ?? null;
+        
+        // Criar próxima ocorrência recorrente ANTES de marcar como completa
+        // Passa o completedKm para calcular corretamente o próximo KM
+        $nextReview = $reviewNotification->createNextRecurrence($completedKm);
+        
+        // Marcar como completa
+        $reviewNotification->markAsCompleted($completedKm);
+
+        $message = 'Revisão marcada como realizada com sucesso!';
+        if ($nextReview) {
+            $message .= ' Próxima revisão criada automaticamente para ' . number_format($nextReview->notification_km, 0, ',', '.') . ' km.';
+        }
+
+        return redirect()->back()
+            ->with('success', $message);
     }
 }

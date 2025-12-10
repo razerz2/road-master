@@ -91,9 +91,20 @@ Responsabilidades:
 - `TripController` - CRUD de percursos
 - `FuelingController` - CRUD de abastecimentos
 - `MaintenanceController` - CRUD de manutenções
+- `LocationController` - CRUD de locais
 - `ImportController` - Importação de dados
-- `ReportController` - Relatórios
+- `ReportController` - Relatórios e exportações
 - `ReviewNotificationController` - Notificações de revisão
+- `MandatoryEventController` - Obrigações legais
+- `GasStationController` - Postos de combustível
+- `UserController` - Gestão de usuários
+- `SettingsController` - Configurações do sistema
+- `NotificationController` - Notificações do sistema
+- `FuelTypeController` - Tipos de combustível
+- `PaymentMethodController` - Métodos de pagamento
+- `MaintenanceTypeController` - Tipos de manutenção
+- `LocationTypeController` - Tipos de local
+- `StorageController` - Servir arquivos do storage
 
 ### 3. Camada de Modelo (Models)
 
@@ -109,10 +120,22 @@ Responsabilidades:
 - `User` - Usuários do sistema
 - `Vehicle` - Veículos
 - `Trip` - Percursos
+- `TripStop` - Paradas intermediárias
 - `Fueling` - Abastecimentos
 - `Maintenance` - Manutenções
 - `Location` - Locais
 - `ReviewNotification` - Notificações de revisão
+- `VehicleMandatoryEvent` - Obrigações legais
+- `GasStation` - Postos de combustível
+- `FuelType` - Tipos de combustível
+- `PaymentMethod` - Métodos de pagamento
+- `MaintenanceType` - Tipos de manutenção
+- `LocationType` - Tipos de local
+- `Module` - Módulos do sistema
+- `UserModulePermission` - Permissões por módulo
+- `SystemSetting` - Configurações do sistema
+- `Notification` - Notificações do sistema
+- `ImportLog` - Logs de importação
 
 ### 4. Camada de Dados (Database)
 
@@ -177,6 +200,7 @@ Diferentes estratégias de importação (KMImport, SheetTripsImport).
 **Localização**: `app/Jobs/`
 
 - `ProcessImportJob` - Processa importações Excel em background
+- `ProcessLocationsImportJob` - Processa importação de locais em background
 
 **Configuração**:
 - Connection: `database`
@@ -212,6 +236,30 @@ Diferentes estratégias de importação (KMImport, SheetTripsImport).
 
 - `KMImport` - Importa dados de KM
 - `SheetTripsImport` - Importa percursos de uma aba
+- `SheetLocationsImport` - Importa locais de uma aba
+- `LocationsImport` - Importa locais
+
+## 📤 Sistema de Exportação
+
+### Exportação de Relatórios
+
+O sistema permite exportar relatórios em dois formatos:
+- **Excel** (`.xlsx`): Utilizando Maatwebsite Excel
+- **PDF**: Utilizando DomPDF
+
+### Classes de Exportação
+
+**Localização**: `app/Exports/`
+
+- `ReportsExport` - Classe abstrata base para exportação de relatórios
+- `TripsExport` - Exportação de percursos
+
+### Funcionalidades
+
+- Exportação de relatórios para Excel com formatação
+- Geração de PDFs formatados
+- Múltiplos relatórios suportados (KM, consumo, custos, etc.)
+- Filtros aplicados na exportação
 
 ## 🔔 Sistema de Notificações
 
@@ -282,6 +330,7 @@ Vehicle
   ├── hasMany Fueling
   ├── hasMany Maintenance
   ├── hasMany ReviewNotification
+  ├── hasMany VehicleMandatoryEvent
   ├── belongsToMany User
   └── belongsToMany FuelType
 
@@ -386,6 +435,7 @@ php artisan test
 - `laravel/framework` - Framework principal
 - `maatwebsite/excel` - Importação/exportação Excel
 - `laravel/breeze` - Autenticação
+- `dompdf/dompdf` - Geração de PDFs
 
 ### Frontend
 

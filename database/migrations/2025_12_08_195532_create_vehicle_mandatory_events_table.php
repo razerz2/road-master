@@ -17,8 +17,10 @@ return new class extends Migration
             $table->enum('type', ['licenciamento', 'ipva', 'multa']);
             $table->date('due_date'); // data limite
             $table->boolean('notified')->default(false); // já notificou?
+            $table->timestamp('last_notified_at')->nullable(); // Data/hora da última notificação
             $table->boolean('resolved')->default(false); // pagamento realizado?
             $table->text('description')->nullable(); // informação adicional
+            $table->boolean('recurring')->default(false); // Se a obrigação é recorrente
             $table->timestamps();
             
             // Índices para melhor performance

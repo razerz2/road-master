@@ -46,6 +46,19 @@
                                 <textarea id="description" name="description" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm" rows="3">{{ old('description') }}</textarea>
                                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
                             </div>
+
+                            <div class="md:col-span-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" name="recurring" value="1" {{ old('recurring') ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        {{ __('Criar automaticamente próxima ocorrência ao marcar como paga') }}
+                                    </span>
+                                </label>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {{ __('Quando marcado, ao marcar esta obrigação como paga, será criada automaticamente uma nova ocorrência para o próximo ano (válido apenas para IPVA e Licenciamento).') }}
+                                </p>
+                                <x-input-error :messages="$errors->get('recurring')" class="mt-2" />
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-end mt-6">

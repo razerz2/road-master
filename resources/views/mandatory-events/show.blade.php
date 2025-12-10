@@ -5,15 +5,27 @@
                 {{ __('Detalhes da Obrigação Legal') }}
             </h2>
             @can('update', $mandatoryEvent)
+            @if(!$mandatoryEvent->resolved)
             <a href="{{ route('mandatory-events.edit', $mandatoryEvent) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Editar
             </a>
+            @endif
             @endcan
         </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                    {{ session('success') }}
+                </div>
+            @endif
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">
                     <h3 class="text-lg font-semibold mb-4">Informações da Obrigação Legal</h3>
@@ -44,7 +56,7 @@
                 <div class="p-6">
                     <h3 class="text-lg font-semibold mb-4">Status Atual</h3>
                     @php
-                        $daysUntilDue = now()->diffInDays($mandatoryEvent->due_date, false);
+                        $daysUntilDue = (int) now()->diffInDays($mandatoryEvent->due_date, false);
                         $isOverdue = $mandatoryEvent->due_date < now() && !$mandatoryEvent->resolved;
                         $isUpcoming = $daysUntilDue <= 10 && $daysUntilDue >= 0 && !$mandatoryEvent->resolved;
                     @endphp
@@ -86,7 +98,7 @@
                 @can('update', $mandatoryEvent)
                 <form action="{{ route('mandatory-events.resolve', $mandatoryEvent) }}" method="POST" class="inline">
                     @csrf
-                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleDelete === 'function') { handleDelete(form, 'Marcar como pago?'); } else { if (confirm('Marcar como pago?')) { form.submit(); } }">
+                    <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleConfirm === 'function') { handleConfirm(form, 'Deseja marcar esta obrigatoriedade como paga?', 'Marcar como Pago'); } else { if (confirm('Deseja marcar esta obrigatoriedade como paga?')) { form.submit(); } }">
                         Marcar como Pago
                     </button>
                 </form>

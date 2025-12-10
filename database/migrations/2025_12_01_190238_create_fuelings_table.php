@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('price_per_liter', 8, 2);
             $table->decimal('total_amount', 10, 2);
             $table->string('gas_station_name')->nullable();
+            $table->foreignId('gas_station_id')->nullable()->constrained()->onDelete('set null');
             $table->string('payment_method')->nullable();
             $table->foreignId('payment_method_id')->nullable();
             $table->text('notes')->nullable();

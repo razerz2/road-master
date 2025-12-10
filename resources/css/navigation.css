@@ -28,3 +28,8 @@ nav > div {
     }
 }
 
+/* Espaçamento entre notificações e perfil */
+nav .hidden.sm\\:flex.sm\\:items-center.sm\\:justify-end > div:first-child {
+    margin-right: 1.5rem !important;
+}
+

@@ -68,6 +68,7 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">KM Atual</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">KM Notificação</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Realizada</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ações</th>
                                 </tr>
                             </thead>
@@ -106,8 +107,34 @@
                                                 {{ $notification->active ? 'Ativo' : 'Inativo' }}
                                             </span>
                                         </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                            @if($notification->completed_at)
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    Sim
+                                                </span>
+                                                <br>
+                                                <span class="text-xs text-gray-500">
+                                                    {{ $notification->completed_at->format('d/m/Y H:i') }}
+                                                    @if($notification->completed_km)
+                                                        <br>KM: {{ number_format($notification->completed_km, 0, ',', '.') }}
+                                                    @endif
+                                                </span>
+                                            @else
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    Não
+                                                </span>
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             @can('update', $notification)
+                                            @if(!$notification->completed_at)
+                                                <form action="{{ route('review-notifications.mark-completed', $notification) }}" method="POST" class="inline mr-2">
+                                                    @csrf
+                                                    <button type="submit" class="text-green-600 hover:text-green-900" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleConfirm === 'function') { handleConfirm(form, 'Deseja marcar esta revisão como realizada?', 'Marcar como Realizada'); } else { if (confirm('Deseja marcar esta revisão como realizada?')) { form.submit(); } }">
+                                                        Marcar como Realizada
+                                                    </button>
+                                                </form>
+                                            @endif
                                             <a href="{{ route('review-notifications.edit', $notification) }}" class="text-indigo-600 hover:text-indigo-900 mr-2">Editar</a>
                                             <form action="{{ route('review-notifications.toggle-active', $notification) }}" method="POST" class="inline">
                                                 @csrf

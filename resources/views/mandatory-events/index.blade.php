@@ -19,6 +19,11 @@
                     {{ session('success') }}
                 </div>
             @endif
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {{ session('error') }}
+                </div>
+            @endif
 
             <!-- Filtros -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
@@ -74,7 +79,7 @@
                                 @forelse($events as $event)
                                     @php
                                         $vehicle = $event->vehicle;
-                                        $daysUntilDue = now()->diffInDays($event->due_date, false);
+                                        $daysUntilDue = (int) now()->diffInDays($event->due_date, false);
                                         $isOverdue = $event->due_date < now() && !$event->resolved;
                                         $isUpcoming = $daysUntilDue <= 10 && $daysUntilDue >= 0 && !$event->resolved;
                                     @endphp
@@ -120,14 +125,16 @@
                                                 @can('update', $event)
                                                 <form action="{{ route('mandatory-events.resolve', $event) }}" method="POST" class="inline mr-2">
                                                     @csrf
-                                                    <button type="submit" class="text-green-600 hover:text-green-900" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleDelete === 'function') { handleDelete(form, 'Marcar como pago?'); } else { if (confirm('Marcar como pago?')) { form.submit(); } }">
+                                                    <button type="submit" class="text-green-600 hover:text-green-900" onclick="event.preventDefault(); const form = this.closest('form'); if (typeof handleConfirm === 'function') { handleConfirm(form, 'Deseja marcar esta obrigatoriedade como paga?', 'Marcar como Pago'); } else { if (confirm('Deseja marcar esta obrigatoriedade como paga?')) { form.submit(); } }">
                                                         Marcar como Pago
                                                     </button>
                                                 </form>
                                                 @endcan
                                             @endif
                                             @can('update', $event)
+                                            @if(!$event->resolved)
                                             <a href="{{ route('mandatory-events.edit', $event) }}" class="text-indigo-600 hover:text-indigo-900 mr-2">Editar</a>
+                                            @endif
                                             @endcan
                                             @can('delete', $event)
                                             <form action="{{ route('mandatory-events.destroy', $event) }}" method="POST" class="inline">

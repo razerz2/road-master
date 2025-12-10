@@ -1234,7 +1234,7 @@
                                                     {{ old('notifications_enabled', $settings['notifications']['notifications_enabled'] ?? '1') === '1' ? 'checked' : '' }}
                                                 >
                                                 <x-input-label for="notifications_enabled" :value="__('Habilitar Notificações Automáticas')" class="ml-2" />
-                                            </div>
+                </div>
                                             <x-input-error :messages="$errors->get('notifications_enabled')" class="mt-2" />
                                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                                 Quando habilitado, o sistema verificará automaticamente revisões e obrigações legais.
@@ -1316,7 +1316,7 @@
                                             </div>
                                             <x-input-error :messages="$errors->get('review_notify_only_admins')" class="mt-2" />
                                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                                Quando marcado, apenas administradores receberão notificações de revisão. Caso contrário, todos os usuários vinculados ao veículo serão notificados.
+                                                Quando marcado, apenas administradores receberão notificações de revisão. Caso contrário, todos os usuários vinculados ao veículo e os administradores serão notificados.
                                             </p>
                                         </div>
                                     </div>
@@ -1379,7 +1379,7 @@
                                             </div>
                                             <x-input-error :messages="$errors->get('mandatory_event_notify_only_admins')" class="mt-2" />
                                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                                Quando marcado, apenas administradores receberão notificações de obrigações legais. Caso contrário, todos os usuários vinculados ao veículo serão notificados.
+                                                Quando marcado, apenas administradores receberão notificações de obrigações legais. Caso contrário, todos os usuários vinculados ao veículo e os administradores serão notificados.
                                             </p>
                                         </div>
                                     </div>

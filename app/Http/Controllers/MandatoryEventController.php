@@ -61,7 +61,11 @@ class MandatoryEventController extends Controller
             'type' => 'required|in:licenciamento,ipva,multa',
             'due_date' => 'required|date',
             'description' => 'nullable|string',
+            'recurring' => 'nullable|boolean',
         ]);
+
+        // Garantir que recurring seja boolean
+        $validated['recurring'] = $request->has('recurring') && $request->recurring == '1';
 
         VehicleMandatoryEvent::create($validated);
 
@@ -88,6 +92,12 @@ class MandatoryEventController extends Controller
     {
         Gate::authorize('update', $mandatoryEvent);
 
+        // Não permitir edição se já estiver marcada como paga
+        if ($mandatoryEvent->resolved) {
+            return redirect()->route('mandatory-events.show', $mandatoryEvent)
+                ->with('error', 'Não é possível editar uma obrigatoriedade que já foi marcada como paga.');
+        }
+
         $vehicles = Vehicle::where('active', true)->orderBy('name')->get();
         $types = VehicleMandatoryEvent::getTypes();
 
@@ -101,12 +111,22 @@ class MandatoryEventController extends Controller
     {
         Gate::authorize('update', $mandatoryEvent);
 
+        // Não permitir edição se já estiver marcada como paga
+        if ($mandatoryEvent->resolved) {
+            return redirect()->route('mandatory-events.show', $mandatoryEvent)
+                ->with('error', 'Não é possível editar uma obrigatoriedade que já foi marcada como paga.');
+        }
+
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'type' => 'required|in:licenciamento,ipva,multa',
             'due_date' => 'required|date',
             'description' => 'nullable|string',
+            'recurring' => 'nullable|boolean',
         ]);
+
+        // Garantir que recurring seja boolean
+        $validated['recurring'] = $request->has('recurring') && $request->recurring == '1';
 
         $mandatoryEvent->update($validated);
 
@@ -134,11 +154,21 @@ class MandatoryEventController extends Controller
     {
         Gate::authorize('update', $mandatoryEvent);
 
+        // Criar próxima ocorrência recorrente ANTES de marcar como resolvida
+        // (para IPVA e Licenciamento)
+        $nextEvent = $mandatoryEvent->createNextRecurrence();
+
+        // Marcar como resolvida
         $mandatoryEvent->update([
             'resolved' => true,
         ]);
 
+        $message = 'Obrigação legal marcada como paga!';
+        if ($nextEvent) {
+            $message .= ' Próxima ocorrência criada automaticamente para ' . $nextEvent->due_date->format('d/m/Y') . '.';
+        }
+
         return redirect()->back()
-            ->with('success', 'Obrigação legal marcada como paga!');
+            ->with('success', $message);
     }
 }

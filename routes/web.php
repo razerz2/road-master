@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Notificações de Revisão
     Route::resource('review-notifications', ReviewNotificationController::class);
     Route::post('/review-notifications/{reviewNotification}/toggle-active', [ReviewNotificationController::class, 'toggleActive'])->name('review-notifications.toggle-active');
+    Route::post('/review-notifications/{reviewNotification}/mark-completed', [ReviewNotificationController::class, 'markAsCompleted'])->name('review-notifications.mark-completed');
 
     // Obrigações Legais (IPVA, Licenciamento, Multas)
     Route::resource('mandatory-events', MandatoryEventController::class);

@@ -71,7 +71,9 @@ Toda a documentação do projeto está disponível na pasta `docs/`:
 - ⛽ **Gestão de Abastecimentos** - Controle de abastecimentos e custos
 - 🔧 **Gestão de Manutenções** - Registro e planejamento de manutenções
 - 🔔 **Notificações de Revisão** - Notificações automáticas baseadas em KM
-- 📊 **Relatórios** - Relatórios de KM, custos e manutenções
+- 📋 **Obrigações Legais** - Controle de IPVA, Licenciamento e Multas
+- 🏪 **Postos de Combustível** - Cadastro e gestão de postos
+- 📊 **Relatórios** - Mais de 15 relatórios com exportação Excel/PDF
 - 📥 **Importação** - Importação em massa via Excel
 - 👥 **Gestão de Usuários** - Sistema de permissões e roles
 - ⚙️ **Configurações** - Configurações gerais e personalização
@@ -79,10 +81,12 @@ Toda a documentação do projeto está disponível na pasta `docs/`:
 ## 🛠️ Tecnologias
 
 - **Backend**: Laravel 12.x
-- **Frontend**: Blade Templates, TailwindCSS, Alpine.js
-- **Banco de Dados**: MySQL (padrão) / PostgreSQL (alternativa)
-- **Processamento**: Laravel Queue
-- **Importação**: Maatwebsite Excel
+- **Frontend**: Blade Templates, TailwindCSS 3.x, Alpine.js 3.x
+- **Banco de Dados**: SQLite (desenvolvimento) / MySQL / PostgreSQL
+- **Processamento**: Laravel Queue (database driver)
+- **Importação/Exportação**: Maatwebsite Excel
+- **Geração de PDF**: DomPDF
+- **Build Tool**: Vite 7.x
 - **PHP**: 8.2+
 
 ## 📦 Scripts Disponíveis

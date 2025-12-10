@@ -15,10 +15,12 @@ O banco de dados do Road Master foi projetado para suportar todas as funcionalid
 5. **maintenances** - Manutenções
 6. **locations** - Locais (origens, destinos, postos, etc.)
 7. **review_notifications** - Notificações de revisão
-8. **notifications** - Notificações do sistema
-9. **modules** - Módulos do sistema
-10. **user_module_permissions** - Permissões por módulo
-11. **system_settings** - Configurações do sistema
+8. **vehicle_mandatory_events** - Obrigações legais (IPVA, Licenciamento, Multas)
+9. **gas_stations** - Postos de combustível
+10. **notifications** - Notificações do sistema
+11. **modules** - Módulos do sistema
+12. **user_module_permissions** - Permissões por módulo
+13. **system_settings** - Configurações do sistema
 
 ### Tabelas de Relacionamento
 
@@ -32,6 +34,7 @@ O banco de dados do Road Master foi projetado para suportar todas as funcionalid
 - **payment_methods** - Métodos de pagamento
 - **maintenance_types** - Tipos de manutenção
 - **location_types** - Tipos de local
+- **gas_stations** - Postos de combustível
 
 ### Tabelas de Sistema
 
@@ -98,6 +101,7 @@ Armazena os veículos da frota.
 - `hasMany` Fueling
 - `hasMany` Maintenance
 - `hasMany` ReviewNotification
+- `hasMany` VehicleMandatoryEvent
 - `belongsToMany` User
 - `belongsToMany` FuelType
 
@@ -182,7 +186,8 @@ Armazena os abastecimentos realizados.
 | liters | decimal(10,2) | Litros abastecidos |
 | price_per_liter | decimal(10,2) | Preço por litro |
 | total_amount | decimal(10,2) | Valor total (calculado) |
-| gas_station_name | string | Nome do posto |
+| gas_station_name | string | Nome do posto (legado) |
+| gas_station_id | bigint | ID do posto (FK gas_stations, nullable) |
 | payment_method | string | Método de pagamento (legado) |
 | payment_method_id | bigint | ID do método de pagamento (FK) |
 | notes | text | Observações |
@@ -194,11 +199,13 @@ Armazena os abastecimentos realizados.
 - `user_id`
 - `date_time`
 - `payment_method_id`
+- `gas_station_id`
 
 **Relacionamentos**:
 - `belongsTo` Vehicle
 - `belongsTo` User
 - `belongsTo` PaymentMethod
+- `belongsTo` GasStation (opcional)
 
 ---
 
@@ -290,6 +297,53 @@ Armazena as configurações de notificações de revisão.
 
 **Relacionamentos**:
 - `belongsTo` Vehicle
+
+---
+
+### vehicle_mandatory_events
+
+Armazena as obrigações legais dos veículos (IPVA, Licenciamento, Multas).
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | bigint | ID único |
+| vehicle_id | bigint | ID do veículo (FK vehicles) |
+| type | enum | Tipo (licenciamento, ipva, multa) |
+| due_date | date | Data de vencimento |
+| notified | boolean | Já foi notificado |
+| resolved | boolean | Já foi resolvido/pago |
+| description | text | Descrição adicional |
+| created_at | timestamp | Data de criação |
+| updated_at | timestamp | Data de atualização |
+
+**Índices**:
+- `vehicle_id`
+- `vehicle_id` + `resolved` (composto)
+- `due_date` + `resolved` + `notified` (composto)
+
+**Relacionamentos**:
+- `belongsTo` Vehicle
+
+---
+
+### gas_stations
+
+Armazena os postos de combustível.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | bigint | ID único |
+| name | string | Nome do posto (único) |
+| slug | string | Slug único |
+| description | text | Descrição |
+| active | boolean | Status ativo/inativo |
+| order | integer | Ordem de exibição |
+| created_at | timestamp | Data de criação |
+| updated_at | timestamp | Data de atualização |
+
+**Índices**:
+- `name` (único)
+- `slug` (único)
 
 ---
 
@@ -520,6 +574,7 @@ Vehicle
   ├── hasMany Fueling
   ├── hasMany Maintenance
   ├── hasMany ReviewNotification
+  ├── hasMany VehicleMandatoryEvent
   ├── belongsToMany User (via user_vehicle)
   └── belongsToMany FuelType (via vehicle_fuel_type)
 
@@ -534,7 +589,14 @@ Trip
 Fueling
   ├── belongsTo Vehicle
   ├── belongsTo User
-  └── belongsTo PaymentMethod
+  ├── belongsTo PaymentMethod
+  └── belongsTo GasStation (opcional)
+
+VehicleMandatoryEvent
+  └── belongsTo Vehicle
+
+GasStation
+  └── hasMany Fueling
 
 Maintenance
   ├── belongsTo Vehicle

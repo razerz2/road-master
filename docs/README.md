@@ -50,17 +50,42 @@ O **Road Master** é uma aplicação web desenvolvida em Laravel para gerenciame
 - Notificações para usuários relacionados
 - Prevenção de notificações duplicadas
 
+### 📋 Obrigações Legais
+- Controle de IPVA
+- Controle de Licenciamento
+- Controle de Multas
+- Alertas de vencimento
+- Marcador de resolução
+
+### 🏪 Postos de Combustível
+- Cadastro de postos de gasolina
+- Gestão completa de informações dos postos
+- Vinculação com abastecimentos
+
 ### 📊 Relatórios
-- KM rodado por veículo
+Mais de 15 relatórios disponíveis com exportação Excel/PDF:
+- KM por veículo
+- Consumo médio
 - Custo de combustível por veículo
+- Histórico de abastecimentos
 - Histórico de manutenções
+- Manutenções detalhadas
+- Manutenções programadas
+- Uso por condutor
+- Auditoria de odômetro
+- Rotas e paradas
+- Ranking de veículos
+- Relatório consolidado
+- Revisões e notificações
 - Filtros por período e veículo
 
 ### 📥 Importação de Dados
 - Importação em massa de percursos via Excel
+- Importação de locais
 - Processamento em background (queue)
 - Acompanhamento de progresso em tempo real
 - Suporte a múltiplas abas no arquivo Excel
+- Exportação de modelo Excel para importação
 
 ### 👥 Gestão de Usuários e Permissões
 - Sistema de roles (admin, condutor)
@@ -72,15 +97,21 @@ O **Road Master** é uma aplicação web desenvolvida em Laravel para gerenciame
 - Configurações gerais do sistema
 - Personalização de aparência
 - Preferências de dashboard
+- Módulos padrão para condutores
+- Configurações de email
+- Configurações de revisões e obrigações legais
 - Tipos de combustível, manutenção, local e métodos de pagamento
+- Gestão de postos de combustível
 
 ## 🛠️ Tecnologias Utilizadas
 
 - **Backend**: Laravel 12.x
-- **Frontend**: Blade Templates, TailwindCSS, Alpine.js
-- **Banco de Dados**: SQLite (desenvolvimento) / MySQL/PostgreSQL (produção)
-- **Processamento**: Laravel Queue (jobs em background)
-- **Importação**: Maatwebsite Excel
+- **Frontend**: Blade Templates, TailwindCSS 3.x, Alpine.js 3.x
+- **Banco de Dados**: SQLite (desenvolvimento) / MySQL / PostgreSQL (produção)
+- **Processamento**: Laravel Queue (database driver)
+- **Importação/Exportação**: Maatwebsite Excel
+- **Geração de PDF**: DomPDF
+- **Build Tool**: Vite 7.x
 - **PHP**: 8.2+
 
 ## 📚 Documentação

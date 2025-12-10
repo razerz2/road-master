@@ -15,7 +15,7 @@ class CheckReviewNotifications extends Command
      *
      * @var string
      */
-    protected $signature = 'reviews:check';
+    protected $signature = 'reviews:check {--force : Força o envio de notificações mesmo se já foram enviadas hoje (útil para testes)}';
 
     /**
      * The console command description.
@@ -60,18 +60,38 @@ class CheckReviewNotifications extends Command
             }
 
             $currentOdometer = $vehicle->current_odometer ?? 0;
-            
+
+            // Não enviar notificações se a revisão já foi realizada
+            if ($reviewNotification->completed_at !== null) {
+                continue;
+            }
+
             // Ajustar KM de notificação considerando a antecedência configurada
             $notificationKm = $reviewNotification->notification_km - $kmBefore;
 
             // Verificar se deve disparar notificação (considerando antecedência)
+            // Continuar enviando até que seja marcada como realizada
+            // Enviar notificação se:
+            // 1. Está ativa
+            // 2. KM atual >= KM de notificação
+            // 3. Não foi realizada ainda
+            // 4. Não foi notificada hoje (evita múltiplas notificações no mesmo dia, mas continua enviando diariamente)
+            //    OU se --force foi usado (para testes)
+            $force = $this->option('force');
+            $lastNotifiedDate = $reviewNotification->last_notified_at 
+                ? \Carbon\Carbon::parse($reviewNotification->last_notified_at)->startOfDay() 
+                : null;
+            $today = now()->startOfDay();
+            
             $shouldNotify = $reviewNotification->active 
                 && $currentOdometer >= $notificationKm
-                && ($reviewNotification->last_notified_km === null || $currentOdometer > $reviewNotification->last_notified_km);
+                && $reviewNotification->completed_at === null
+                && ($force || $lastNotifiedDate === null || $lastNotifiedDate->lt($today));
 
             if ($shouldNotify) {
                 // Buscar usuários para notificar
                 if ($notifyOnlyAdmins) {
+                    // Se configurado para notificar apenas admins
                     $userIds = \App\Models\User::where('role', 'admin')
                         ->where('active', true)
                         ->pluck('id')
@@ -80,13 +100,14 @@ class CheckReviewNotifications extends Command
                     // Buscar usuários relacionados ao veículo
                     $userIds = $vehicle->users()->pluck('users.id')->toArray();
 
-                    // Se não houver usuários específicos, notificar todos os admins
-                    if (empty($userIds)) {
-                        $userIds = \App\Models\User::where('role', 'admin')
-                            ->where('active', true)
-                            ->pluck('id')
-                            ->toArray();
-                    }
+                    // Sempre incluir admins nas notificações
+                    $adminIds = \App\Models\User::where('role', 'admin')
+                        ->where('active', true)
+                        ->pluck('id')
+                        ->toArray();
+                    
+                    // Combinar usuários do veículo com admins (sem duplicatas)
+                    $userIds = array_unique(array_merge($userIds, $adminIds));
                 }
 
                 if (!empty($userIds)) {
@@ -102,7 +123,9 @@ class CheckReviewNotifications extends Command
                     }
                     
                     $title = "Revisão Necessária: {$name}";
-                    $link = route('vehicles.show', $vehicle->id);
+                    // Link para a página de revisões do veículo filtrado
+                    // Usar URL relativa para evitar problemas com diferentes hosts/portas
+                    $link = '/review-notifications?vehicle_id=' . $vehicle->id;
 
                     // Criar notificações para os usuários
                     Notification::createForUsers(
@@ -113,8 +136,12 @@ class CheckReviewNotifications extends Command
                         $link
                     );
 
-                    // Marcar como notificado
-                    $reviewNotification->markAsNotified($currentOdometer);
+                    // Atualizar timestamp de última notificação para controlar envio diário
+                    // Isso permite que continue enviando notificações diariamente até ser marcada como realizada
+                    $reviewNotification->update([
+                        'last_notified_at' => now(),
+                        'last_notified_km' => $currentOdometer,
+                    ]);
 
                     $notificationsSent++;
                     $this->line("✓ Notificação enviada para veículo {$vehicle->name} - {$name}");
