@@ -669,6 +669,71 @@
                                         </div>
                                     </div>
 
+                                    <!-- Cores dos Botões -->
+                                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                                        <h4 class="text-md font-medium text-gray-900 dark:text-gray-100 mb-4">Cores dos Botões</h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                            Personalize as cores dos botões primários do sistema. Use códigos de cor hexadecimais (ex: #4F46E5).
+                                        </p>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <x-input-label for="button_color_from" :value="__('Cor Inicial (Gradiente)')" />
+                                                <div class="mt-2 flex items-center gap-3">
+                                                    <input type="color" 
+                                                           id="button_color_from" 
+                                                           value="{{ old('button_color_from', \App\Models\SystemSetting::get('button_color_from', '#4F46E5')) }}"
+                                                           class="h-10 w-20 rounded border border-gray-300 dark:border-gray-700 cursor-pointer"
+                                                           onchange="document.getElementById('button_color_from_text').value = this.value; updateButtonPreview();">
+                                                    <x-text-input 
+                                                        id="button_color_from_text" 
+                                                        class="block flex-1" 
+                                                        type="text" 
+                                                        name="button_color_from" 
+                                                        :value="old('button_color_from', \App\Models\SystemSetting::get('button_color_from', '#4F46E5'))" 
+                                                        maxlength="7"
+                                                        placeholder="#4F46E5"
+                                                        oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('button_color_from').value = this.value; } updateButtonPreview();"
+                                                    />
+                                                </div>
+                                                <x-input-error :messages="$errors->get('button_color_from')" class="mt-2" />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="button_color_to" :value="__('Cor Final (Gradiente)')" />
+                                                <div class="mt-2 flex items-center gap-3">
+                                                    <input type="color" 
+                                                           id="button_color_to" 
+                                                           value="{{ old('button_color_to', \App\Models\SystemSetting::get('button_color_to', '#9333EA')) }}"
+                                                           class="h-10 w-20 rounded border border-gray-300 dark:border-gray-700 cursor-pointer"
+                                                           onchange="document.getElementById('button_color_to_text').value = this.value; updateButtonPreview();">
+                                                    <x-text-input 
+                                                        id="button_color_to_text" 
+                                                        class="block flex-1" 
+                                                        type="text" 
+                                                        name="button_color_to" 
+                                                        :value="old('button_color_to', \App\Models\SystemSetting::get('button_color_to', '#9333EA'))" 
+                                                        maxlength="7"
+                                                        placeholder="#9333EA"
+                                                        oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('button_color_to').value = this.value; } updateButtonPreview();"
+                                                    />
+                                                </div>
+                                                <x-input-error :messages="$errors->get('button_color_to')" class="mt-2" />
+                                            </div>
+                                        </div>
+
+                                        <!-- Preview do botão -->
+                                        <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Preview:</p>
+                                            <button type="button" 
+                                                    id="button_preview"
+                                                    class="inline-flex items-center justify-center px-5 py-2.5 bg-gradient-to-r border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-wide shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transform hover:scale-105 transition-all duration-200 ease-in-out"
+                                                    style="background: linear-gradient(to right, {{ old('button_color_from', \App\Models\SystemSetting::get('button_color_from', '#4F46E5')) }}, {{ old('button_color_to', \App\Models\SystemSetting::get('button_color_to', '#9333EA')) }});">
+                                                Botão de Exemplo
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                                         <button type="button" onclick="resetAppearance()" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
                                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1424,14 +1489,59 @@
         async function resetAppearance() {
             let confirmed = false;
             if (window.showConfirm) {
-                confirmed = await window.showConfirm('Tem certeza que deseja redefinir as logos para o padrão do Laravel?', 'Redefinir Logos');
+                confirmed = await window.showConfirm('Tem certeza que deseja redefinir as logos e cores dos botões para o padrão?', 'Redefinir Aparência');
             } else {
-                confirmed = confirm('Tem certeza que deseja redefinir as logos para o padrão do Laravel?');
+                confirmed = confirm('Tem certeza que deseja redefinir as logos e cores dos botões para o padrão?');
             }
             if (confirmed) {
                 document.getElementById('resetAppearanceForm').submit();
             }
         }
+
+        // Atualizar preview do botão quando as cores mudarem
+        function updateButtonPreview() {
+            const colorFromInput = document.getElementById('button_color_from');
+            const colorToInput = document.getElementById('button_color_to');
+            const previewButton = document.getElementById('button_preview');
+            
+            if (colorFromInput && colorToInput && previewButton) {
+                const fromColor = colorFromInput.value;
+                const toColor = colorToInput.value;
+                previewButton.style.background = `linear-gradient(to right, ${fromColor}, ${toColor})`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const colorFromInput = document.getElementById('button_color_from');
+            const colorFromText = document.getElementById('button_color_from_text');
+            const colorToInput = document.getElementById('button_color_to');
+            const colorToText = document.getElementById('button_color_to_text');
+
+            function syncColorInputs(input, textInput) {
+                if (input && textInput) {
+                    input.addEventListener('input', function() {
+                        textInput.value = this.value;
+                        updateButtonPreview();
+                    });
+                    textInput.addEventListener('input', function() {
+                        if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                            input.value = this.value;
+                            updateButtonPreview();
+                        }
+                    });
+                }
+            }
+
+            if (colorFromInput && colorFromText) {
+                syncColorInputs(colorFromInput, colorFromText);
+            }
+            if (colorToInput && colorToText) {
+                syncColorInputs(colorToInput, colorToText);
+            }
+            
+            // Atualizar preview inicial
+            updateButtonPreview();
+        });
 
         // Script para gerenciar checkboxes de módulos padrão
         document.addEventListener('DOMContentLoaded', function() {

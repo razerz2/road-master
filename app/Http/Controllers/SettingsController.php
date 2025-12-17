@@ -192,6 +192,8 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg|max:2048',
             'favicon' => 'nullable|file|mimes:png,ico,svg|max:1024',
+            'button_color_from' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'button_color_to' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
         ], [
             'logo.image' => 'O arquivo de logo deve ser uma imagem válida.',
             'logo.mimes' => 'O logo deve ser um arquivo PNG, JPG, JPEG ou SVG.',
@@ -199,6 +201,8 @@ class SettingsController extends Controller
             'favicon.file' => 'O arquivo de favicon deve ser válido.',
             'favicon.mimes' => 'O favicon deve ser um arquivo PNG, ICO ou SVG.',
             'favicon.max' => 'O favicon não pode ser maior que 1MB.',
+            'button_color_from.regex' => 'A cor inicial deve estar no formato hexadecimal (ex: #4F46E5).',
+            'button_color_to.regex' => 'A cor final deve estar no formato hexadecimal (ex: #9333EA).',
         ]);
 
         // Processar upload do logo
@@ -241,7 +245,16 @@ class SettingsController extends Controller
             SystemSetting::set('system_favicon', $faviconName, 'string', 'appearance', 'Favicon do sistema');
         }
 
-        return redirect()->route('settings.index')
+        // Salvar cores dos botões
+        if ($request->has('button_color_from')) {
+            SystemSetting::set('button_color_from', $validated['button_color_from'], 'string', 'appearance', 'Cor inicial dos botões');
+        }
+
+        if ($request->has('button_color_to')) {
+            SystemSetting::set('button_color_to', $validated['button_color_to'], 'string', 'appearance', 'Cor final dos botões');
+        }
+
+        return redirect()->route('settings.index', ['activeTab' => 'appearance'])
             ->with('success', 'Configurações de aparência atualizadas com sucesso!');
     }
 
@@ -263,8 +276,12 @@ class SettingsController extends Controller
         }
         SystemSetting::where('key', 'system_favicon')->delete();
 
-        return redirect()->route('settings.index')
-            ->with('success', 'Logos redefinidas para o padrão do Laravel com sucesso!');
+        // Redefinir cores dos botões para o padrão
+        SystemSetting::where('key', 'button_color_from')->delete();
+        SystemSetting::where('key', 'button_color_to')->delete();
+
+        return redirect()->route('settings.index', ['activeTab' => 'appearance'])
+            ->with('success', 'Aparência redefinida para o padrão com sucesso!');
     }
 
     // ========== PREFERÊNCIAS DO DASHBOARD ==========

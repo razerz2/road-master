@@ -186,7 +186,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
         $vehicleId = $request->input('vehicle_id');
 
-        $query = Maintenance::with('vehicle')
+        $query = Maintenance::with(['vehicle', 'user'])
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -313,7 +313,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
         $vehicleId = $request->input('vehicle_id');
 
-        $query = Maintenance::with(['vehicle', 'maintenanceType'])
+        $query = Maintenance::with(['vehicle', 'maintenanceType', 'user'])
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1109,12 +1109,13 @@ class ReportController extends Controller
                 'Preço/L' => 'R$ ' . number_format($fueling->price_per_liter, 2, ',', '.'),
                 'Valor Total' => 'R$ ' . number_format($fueling->total_amount, 2, ',', '.'),
                 'Posto' => $fueling->gas_station_name ?? '-',
+                'Usuário' => $fueling->user->name ?? '-',
             ];
         }
 
         return $this->exportToExcel(
             $data,
-            ['Data/Hora', 'Veículo', 'Tipo', 'Litros', 'Preço/L', 'Valor Total', 'Posto'],
+            ['Data/Hora', 'Veículo', 'Tipo', 'Litros', 'Preço/L', 'Valor Total', 'Posto', 'Usuário'],
             'Resumo de Abastecimentos',
             'abastecimentos_' . $startDate . '_' . $endDate
         );
@@ -1152,12 +1153,13 @@ class ReportController extends Controller
                 'Preço/L' => 'R$ ' . number_format($fueling->price_per_liter, 2, ',', '.'),
                 'Valor Total' => 'R$ ' . number_format($fueling->total_amount, 2, ',', '.'),
                 'Posto' => $fueling->gas_station_name ?? '-',
+                'Usuário' => $fueling->user->name ?? '-',
             ];
         }
 
         return $this->exportToPDF(
             $data,
-            ['Data/Hora', 'Veículo', 'Tipo', 'Litros', 'Preço/L', 'Valor Total', 'Posto'],
+            ['Data/Hora', 'Veículo', 'Tipo', 'Litros', 'Preço/L', 'Valor Total', 'Posto', 'Usuário'],
             'Relatório - Resumo de Abastecimentos',
             'table',
             'abastecimentos_' . $startDate . '_' . $endDate
@@ -1173,7 +1175,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
         $vehicleId = $request->input('vehicle_id');
 
-        $query = Maintenance::with('vehicle')
+        $query = Maintenance::with(['vehicle', 'user'])
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1190,12 +1192,13 @@ class ReportController extends Controller
                 'Tipo' => ucfirst(str_replace('_', ' ', $maintenance->type)),
                 'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
                 'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
+                'Usuário' => $maintenance->user->name ?? '-',
             ];
         }
 
         return $this->exportToExcel(
             $data,
-            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM'],
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Usuário'],
             'Manutenções',
             'manutencoes_' . $startDate . '_' . $endDate
         );
@@ -1209,7 +1212,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
         $vehicleId = $request->input('vehicle_id');
 
-        $query = Maintenance::with('vehicle')
+        $query = Maintenance::with(['vehicle', 'user'])
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1226,12 +1229,13 @@ class ReportController extends Controller
                 'Tipo' => ucfirst(str_replace('_', ' ', $maintenance->type)),
                 'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
                 'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
+                'Usuário' => $maintenance->user->name ?? '-',
             ];
         }
 
         return $this->exportToPDF(
             $data,
-            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM'],
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Usuário'],
             'Relatório - Manutenções',
             'table',
             'manutencoes_' . $startDate . '_' . $endDate
@@ -1247,7 +1251,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
         $vehicleId = $request->input('vehicle_id');
 
-        $query = Maintenance::with(['vehicle', 'maintenanceType'])
+        $query = Maintenance::with(['vehicle', 'maintenanceType', 'user'])
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1265,12 +1269,13 @@ class ReportController extends Controller
                 'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
                 'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
                 'Descrição' => $maintenance->description ?? '-',
+                'Usuário' => $maintenance->user->name ?? '-',
             ];
         }
 
         return $this->exportToExcel(
             $data,
-            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Descrição'],
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Descrição', 'Usuário'],
             'Manutenções Detalhado',
             'manutencoes_detalhado_' . $startDate . '_' . $endDate
         );
@@ -1284,7 +1289,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
         $vehicleId = $request->input('vehicle_id');
 
-        $query = Maintenance::with(['vehicle', 'maintenanceType'])
+        $query = Maintenance::with(['vehicle', 'maintenanceType', 'user'])
             ->whereBetween('date', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1302,12 +1307,13 @@ class ReportController extends Controller
                 'Custo' => $maintenance->cost ? 'R$ ' . number_format($maintenance->cost, 2, ',', '.') : '-',
                 'KM' => number_format($maintenance->odometer, 0, ',', '.') . ' km',
                 'Descrição' => $maintenance->description ?? '-',
+                'Usuário' => $maintenance->user->name ?? '-',
             ];
         }
 
         return $this->exportToPDF(
             $data,
-            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Descrição'],
+            ['Data', 'Veículo', 'Tipo', 'Custo', 'KM', 'Descrição', 'Usuário'],
             'Relatório - Manutenções Detalhado',
             'table',
             'manutencoes_detalhado_' . $startDate . '_' . $endDate
