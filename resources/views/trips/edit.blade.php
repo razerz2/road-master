@@ -29,7 +29,7 @@
                                 <x-input-label for="driver_id" :value="__('Condutor')" />
                                 <div class="flex items-end gap-2">
                                     <div class="flex-1">
-                                        <select id="driver_id" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm bg-gray-100" required disabled>
+                                        <select id="driver_id" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm bg-gray-100 dark:bg-gray-700" required disabled>
                                             @foreach($drivers as $driver)
                                                 <option value="{{ $driver->id }}" {{ old('driver_id', $trip->driver_id) == $driver->id ? 'selected' : '' }}>{{ $driver->name }}</option>
                                             @endforeach
@@ -339,8 +339,8 @@
                     if (driverSelectEnabled) {
                         // Habilitar campo
                         driverSelect.disabled = false;
-                        driverSelect.classList.remove('bg-gray-100');
-                        driverSelect.classList.add('bg-white');
+                        driverSelect.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+                        driverSelect.classList.add('bg-white', 'dark:bg-gray-900');
                         toggleText.textContent = 'Desabilitar';
                         toggleButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                         toggleButton.classList.add('bg-gray-600', 'hover:bg-gray-700');
@@ -349,8 +349,8 @@
                         driverSelect.disabled = true;
                         driverSelect.value = adminUserId;
                         driverHidden.value = adminUserId;
-                        driverSelect.classList.remove('bg-white');
-                        driverSelect.classList.add('bg-gray-100');
+                        driverSelect.classList.remove('bg-white', 'dark:bg-gray-900');
+                        driverSelect.classList.add('bg-gray-100', 'dark:bg-gray-700');
                         toggleText.textContent = 'Habilitar';
                         toggleButton.classList.remove('bg-gray-600', 'hover:bg-gray-700');
                         toggleButton.classList.add('bg-blue-600', 'hover:bg-blue-700');

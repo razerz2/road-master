@@ -7,6 +7,7 @@ use App\Models\Vehicle;
 use App\Models\PaymentMethod;
 use App\Models\FuelType;
 use App\Models\GasStation;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -45,19 +46,30 @@ class FuelingController extends Controller
     {
         Gate::authorize('create', Fueling::class);
 
+        $user = Auth::user();
         $vehicles = Vehicle::where('active', true)->get();
         $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
         $fuelTypes = FuelType::where('active', true)->orderBy('order')->orderBy('name')->get();
         $gasStations = GasStation::where('active', true)->orderBy('order')->orderBy('name')->get();
+        
+        // Incluir condutores e admins na lista (incluir 'motorista' para compatibilidade com dados antigos)
+        $drivers = User::whereIn('role', ['condutor', 'motorista', 'admin'])->where('active', true)->get();
+        
+        // Garantir que o admin logado esteja sempre na lista
+        if ($user->role === 'admin' && !$drivers->contains('id', $user->id)) {
+            $drivers->push($user);
+        }
 
-        return view('fuelings.create', compact('vehicles', 'paymentMethods', 'fuelTypes', 'gasStations'));
+        return view('fuelings.create', compact('vehicles', 'paymentMethods', 'fuelTypes', 'gasStations', 'drivers'));
     }
 
     public function store(Request $request)
     {
         Gate::authorize('create', Fueling::class);
 
-        $validated = $request->validate([
+        $user = Auth::user();
+        
+        $validationRules = [
             'vehicle_id' => 'required|exists:vehicles,id',
             'date_time' => 'required|date',
             'odometer' => 'required|integer|min:0',
@@ -70,14 +82,27 @@ class FuelingController extends Controller
             'payment_method' => 'nullable|string|max:255',
             'payment_method_id' => 'nullable|exists:payment_methods,id',
             'notes' => 'nullable|string',
-        ]);
+        ];
+        
+        // Admin pode escolher o usuário, condutor sempre usa seu próprio ID
+        if ($user->role === 'admin') {
+            $validationRules['user_id'] = 'required|exists:users,id';
+        }
+        
+        $validated = $request->validate($validationRules);
 
         // Calcular total_amount se não informado
         if (empty($validated['total_amount'])) {
             $validated['total_amount'] = $validated['liters'] * $validated['price_per_liter'];
         }
 
-        $validated['user_id'] = Auth::id();
+        // Se for condutor, usar o próprio ID
+        if ($user->role === 'condutor') {
+            $validated['user_id'] = $user->id;
+        } elseif ($user->role !== 'admin') {
+            // Outros usuários também usam seu próprio ID
+            $validated['user_id'] = $user->id;
+        }
 
         $fueling = Fueling::create($validated);
 
@@ -104,20 +129,31 @@ class FuelingController extends Controller
     {
         Gate::authorize('update', $fueling);
 
+        $user = Auth::user();
         $vehicles = Vehicle::where('active', true)->get();
         $paymentMethods = PaymentMethod::where('active', true)->orderBy('order')->orderBy('name')->get();
         $fuelTypes = FuelType::where('active', true)->orderBy('order')->orderBy('name')->get();
         $gasStations = GasStation::where('active', true)->orderBy('order')->orderBy('name')->get();
-        $fueling->load('paymentMethod', 'gasStation');
+        $fueling->load('paymentMethod', 'gasStation', 'user');
+        
+        // Incluir condutores e admins na lista (incluir 'motorista' para compatibilidade com dados antigos)
+        $drivers = User::whereIn('role', ['condutor', 'motorista', 'admin'])->where('active', true)->get();
+        
+        // Garantir que o admin logado esteja sempre na lista
+        if ($user->role === 'admin' && !$drivers->contains('id', $user->id)) {
+            $drivers->push($user);
+        }
 
-        return view('fuelings.edit', compact('fueling', 'vehicles', 'paymentMethods', 'fuelTypes', 'gasStations'));
+        return view('fuelings.edit', compact('fueling', 'vehicles', 'paymentMethods', 'fuelTypes', 'gasStations', 'drivers'));
     }
 
     public function update(Request $request, Fueling $fueling)
     {
         Gate::authorize('update', $fueling);
 
-        $validated = $request->validate([
+        $user = Auth::user();
+        
+        $validationRules = [
             'vehicle_id' => 'required|exists:vehicles,id',
             'date_time' => 'required|date',
             'odometer' => 'required|integer|min:0',
@@ -130,11 +166,26 @@ class FuelingController extends Controller
             'payment_method' => 'nullable|string|max:255',
             'payment_method_id' => 'nullable|exists:payment_methods,id',
             'notes' => 'nullable|string',
-        ]);
+        ];
+        
+        // Admin pode escolher o usuário, condutor sempre usa seu próprio ID
+        if ($user->role === 'admin') {
+            $validationRules['user_id'] = 'required|exists:users,id';
+        }
+        
+        $validated = $request->validate($validationRules);
 
         // Calcular total_amount se não informado
         if (empty($validated['total_amount'])) {
             $validated['total_amount'] = $validated['liters'] * $validated['price_per_liter'];
+        }
+
+        // Se for condutor, usar o próprio ID
+        if ($user->role === 'condutor') {
+            $validated['user_id'] = $user->id;
+        } elseif ($user->role !== 'admin') {
+            // Outros usuários também usam seu próprio ID
+            $validated['user_id'] = $user->id;
         }
 
         $fueling->update($validated);

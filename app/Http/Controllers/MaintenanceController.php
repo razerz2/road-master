@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Maintenance;
 use App\Models\Vehicle;
 use App\Models\MaintenanceType;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class MaintenanceController extends Controller
 {
@@ -40,17 +42,28 @@ class MaintenanceController extends Controller
     {
         Gate::authorize('create', Maintenance::class);
 
+        $user = Auth::user();
         $vehicles = Vehicle::where('active', true)->get();
         $maintenanceTypes = MaintenanceType::where('active', true)->orderBy('order')->orderBy('name')->get();
+        
+        // Incluir condutores e admins na lista (incluir 'motorista' para compatibilidade com dados antigos)
+        $drivers = User::whereIn('role', ['condutor', 'motorista', 'admin'])->where('active', true)->get();
+        
+        // Garantir que o admin logado esteja sempre na lista
+        if ($user->role === 'admin' && !$drivers->contains('id', $user->id)) {
+            $drivers->push($user);
+        }
 
-        return view('maintenances.create', compact('vehicles', 'maintenanceTypes'));
+        return view('maintenances.create', compact('vehicles', 'maintenanceTypes', 'drivers'));
     }
 
     public function store(Request $request)
     {
         Gate::authorize('create', Maintenance::class);
 
-        $validated = $request->validate([
+        $user = Auth::user();
+        
+        $validationRules = [
             'vehicle_id' => 'required|exists:vehicles,id',
             'date' => 'required|date',
             'odometer' => 'required|integer|min:0',
@@ -62,7 +75,27 @@ class MaintenanceController extends Controller
             'next_due_date' => 'nullable|date',
             'next_due_odometer' => 'nullable|integer|min:0',
             'notes' => 'nullable|string',
-        ]);
+        ];
+        
+        // Admin pode escolher o usuário, condutor sempre usa seu próprio ID
+        if ($user->role === 'admin') {
+            $validationRules['user_id'] = 'nullable|exists:users,id';
+        }
+        
+        $validated = $request->validate($validationRules);
+
+        // Se for condutor, usar o próprio ID
+        if ($user->role === 'condutor') {
+            $validated['user_id'] = $user->id;
+        } elseif ($user->role !== 'admin') {
+            // Outros usuários também usam seu próprio ID
+            $validated['user_id'] = $user->id;
+        } elseif ($user->role === 'admin') {
+            // Se admin não escolheu, usar o próprio ID
+            if (!isset($validated['user_id']) || empty($validated['user_id'])) {
+                $validated['user_id'] = $user->id;
+            }
+        }
 
         Maintenance::create($validated);
 
@@ -83,18 +116,29 @@ class MaintenanceController extends Controller
     {
         Gate::authorize('update', $maintenance);
 
+        $user = Auth::user();
         $vehicles = Vehicle::where('active', true)->get();
         $maintenanceTypes = MaintenanceType::where('active', true)->orderBy('order')->orderBy('name')->get();
-        $maintenance->load('maintenanceType');
+        $maintenance->load('maintenanceType', 'user');
+        
+        // Incluir condutores e admins na lista (incluir 'motorista' para compatibilidade com dados antigos)
+        $drivers = User::whereIn('role', ['condutor', 'motorista', 'admin'])->where('active', true)->get();
+        
+        // Garantir que o admin logado esteja sempre na lista
+        if ($user->role === 'admin' && !$drivers->contains('id', $user->id)) {
+            $drivers->push($user);
+        }
 
-        return view('maintenances.edit', compact('maintenance', 'vehicles', 'maintenanceTypes'));
+        return view('maintenances.edit', compact('maintenance', 'vehicles', 'maintenanceTypes', 'drivers'));
     }
 
     public function update(Request $request, Maintenance $maintenance)
     {
         Gate::authorize('update', $maintenance);
 
-        $validated = $request->validate([
+        $user = Auth::user();
+        
+        $validationRules = [
             'vehicle_id' => 'required|exists:vehicles,id',
             'date' => 'required|date',
             'odometer' => 'required|integer|min:0',
@@ -106,7 +150,27 @@ class MaintenanceController extends Controller
             'next_due_date' => 'nullable|date',
             'next_due_odometer' => 'nullable|integer|min:0',
             'notes' => 'nullable|string',
-        ]);
+        ];
+        
+        // Admin pode escolher o usuário, condutor sempre usa seu próprio ID
+        if ($user->role === 'admin') {
+            $validationRules['user_id'] = 'nullable|exists:users,id';
+        }
+        
+        $validated = $request->validate($validationRules);
+
+        // Se for condutor, usar o próprio ID
+        if ($user->role === 'condutor') {
+            $validated['user_id'] = $user->id;
+        } elseif ($user->role !== 'admin') {
+            // Outros usuários também usam seu próprio ID
+            $validated['user_id'] = $user->id;
+        } elseif ($user->role === 'admin') {
+            // Se admin não escolheu, manter o valor atual ou usar o próprio ID
+            if (!isset($validated['user_id']) || empty($validated['user_id'])) {
+                $validated['user_id'] = $maintenance->user_id ?? $user->id;
+            }
+        }
 
         $maintenance->update($validated);
 

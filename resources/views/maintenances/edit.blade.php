@@ -24,6 +24,32 @@
                                 <x-input-error :messages="$errors->get('vehicle_id')" class="mt-2" />
                             </div>
 
+                            @if(auth()->user()->role === 'admin')
+                            <div>
+                                <x-input-label for="user_id" :value="__('Usuário')" />
+                                <div class="flex items-end gap-2">
+                                    <div class="flex-1">
+                                        <select id="user_id" class="block mt-1 w-full rounded-md border-gray-300 shadow-sm bg-gray-100 dark:bg-gray-700" required disabled>
+                                            @foreach($drivers as $driver)
+                                                <option value="{{ $driver->id }}" {{ old('user_id', $maintenance->user_id ?? auth()->id()) == $driver->id ? 'selected' : '' }}>{{ $driver->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <input type="hidden" id="user_id_hidden" name="user_id" value="{{ old('user_id', $maintenance->user_id ?? auth()->id()) }}">
+                                        <x-input-error :messages="$errors->get('user_id')" class="mt-2" />
+                                    </div>
+                                    <button type="button" id="toggle_user_select" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm whitespace-nowrap mb-1" title="Habilitar seleção de usuário">
+                                        <span id="toggle_user_text">Habilitar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            @elseif(auth()->user()->role === 'condutor')
+                            {{-- Condutor sempre usa seu próprio ID, campo oculto --}}
+                            <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                            @else
+                            {{-- Outros usuários também usam campo oculto --}}
+                            <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                            @endif
+
                             <div>
                                 <x-input-label for="date" :value="__('Data')" />
                                 <x-text-input id="date" class="block mt-1 w-full" type="date" name="date" :value="old('date', $maintenance->date->format('Y-m-d'))" required />
@@ -110,5 +136,51 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Controlar habilitação/desabilitação do campo de usuário para admin
+        @if(auth()->user()->role === 'admin')
+        document.addEventListener('DOMContentLoaded', function() {
+            const userSelect = document.getElementById('user_id');
+            const userHidden = document.getElementById('user_id_hidden');
+            const toggleButton = document.getElementById('toggle_user_select');
+            const toggleText = document.getElementById('toggle_user_text');
+            let userSelectEnabled = false;
+            const adminUserId = {{ auth()->id() }};
+            const currentUserId = {{ $maintenance->user_id ?? auth()->id() }};
+            
+            if (userSelect && toggleButton && userHidden) {
+                // Sincronizar valor do select com o hidden quando mudar
+                userSelect.addEventListener('change', function() {
+                    userHidden.value = this.value;
+                });
+                
+                toggleButton.addEventListener('click', function() {
+                    userSelectEnabled = !userSelectEnabled;
+                    
+                    if (userSelectEnabled) {
+                        // Habilitar campo
+                        userSelect.disabled = false;
+                        userSelect.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+                        userSelect.classList.add('bg-white', 'dark:bg-gray-900');
+                        toggleText.textContent = 'Desabilitar';
+                        toggleButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                        toggleButton.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                    } else {
+                        // Desabilitar campo e voltar para admin logado
+                        userSelect.disabled = true;
+                        userSelect.value = adminUserId;
+                        userHidden.value = adminUserId;
+                        userSelect.classList.remove('bg-white', 'dark:bg-gray-900');
+                        userSelect.classList.add('bg-gray-100', 'dark:bg-gray-700');
+                        toggleText.textContent = 'Habilitar';
+                        toggleButton.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+                        toggleButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    }
+                });
+            }
+        });
+        @endif
+    </script>
 </x-app-layout>
 
