@@ -335,6 +335,50 @@
             }
         }
 
+        // Calcular valor total automaticamente
+        let totalAmountManuallyEdited = false;
+
+        function calculateTotalAmount() {
+            const liters = parseFloat(document.getElementById('liters').value) || 0;
+            const pricePerLiter = parseFloat(document.getElementById('price_per_liter').value) || 0;
+            const totalAmountField = document.getElementById('total_amount');
+            
+            if (liters > 0 && pricePerLiter > 0) {
+                const total = liters * pricePerLiter;
+                
+                // Sempre calcular quando litros ou preço mudarem
+                // Se o usuário editou manualmente, ele pode editar novamente depois
+                totalAmountField.value = total.toFixed(2);
+                totalAmountManuallyEdited = false;
+            }
+        }
+
+        // Adicionar event listeners para calcular automaticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const litersField = document.getElementById('liters');
+            const pricePerLiterField = document.getElementById('price_per_liter');
+            const totalAmountField = document.getElementById('total_amount');
+            
+            if (litersField && pricePerLiterField && totalAmountField) {
+                // Calcular quando litros ou preço por litro mudarem
+                litersField.addEventListener('input', calculateTotalAmount);
+                litersField.addEventListener('change', calculateTotalAmount);
+                pricePerLiterField.addEventListener('input', calculateTotalAmount);
+                pricePerLiterField.addEventListener('change', calculateTotalAmount);
+                
+                // Permitir que o usuário edite manualmente o valor total
+                // Quando ele editar, o valor editado permanece até que ele mude litros ou preço novamente
+                totalAmountField.addEventListener('input', function() {
+                    totalAmountManuallyEdited = true;
+                });
+                
+                // Calcular inicialmente se os campos já tiverem valores
+                if (litersField.value && pricePerLiterField.value) {
+                    calculateTotalAmount();
+                }
+            }
+        });
+
         // Controlar habilitação/desabilitação do campo de usuário para admin
         @if(auth()->user()->role === 'admin')
         document.addEventListener('DOMContentLoaded', function() {
