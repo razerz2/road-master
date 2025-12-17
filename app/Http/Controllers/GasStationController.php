@@ -90,10 +90,19 @@ class GasStationController extends Controller
         
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:gas_stations,name',
+                'name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'unique:gas_stations,name'
+                ],
                 'description' => 'nullable|string|max:1000',
                 'active' => 'boolean',
                 'order' => 'nullable|integer|min:0',
+            ], [
+                'name.required' => 'O nome do posto é obrigatório.',
+                'name.unique' => 'Já existe um posto cadastrado com este nome.',
+                'name.max' => 'O nome do posto não pode ter mais de 255 caracteres.',
             ]);
 
             $validated['slug'] = Str::slug($validated['name']);
