@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('gas_station_name')->nullable();
             $table->foreignId('gas_station_id')->nullable()->constrained()->onDelete('set null');
             $table->string('payment_method')->nullable();
-            $table->foreignId('payment_method_id')->nullable();
+            $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->onDelete('set null');
             $table->text('notes')->nullable();
             $table->timestamps();
         });
