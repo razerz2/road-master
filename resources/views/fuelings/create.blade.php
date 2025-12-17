@@ -95,15 +95,22 @@
 
                             <div>
                                 <x-input-label for="gas_station_id" :value="__('Posto')" />
-                                <select id="gas_station_id" name="gas_station_id" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm">
-                                    <option value="">Selecione um posto</option>
-                                    @foreach($gasStations as $gasStation)
-                                        <option value="{{ $gasStation->id }}" {{ old('gas_station_id') == $gasStation->id ? 'selected' : '' }}>
-                                            {{ $gasStation->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <x-input-error :messages="$errors->get('gas_station_id')" class="mt-2" />
+                                <div class="flex items-end gap-2">
+                                    <div class="flex-1">
+                                        <select id="gas_station_id" name="gas_station_id" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm">
+                                            <option value="">Selecione um posto</option>
+                                            @foreach($gasStations as $gasStation)
+                                                <option value="{{ $gasStation->id }}" {{ old('gas_station_id') == $gasStation->id ? 'selected' : '' }}>
+                                                    {{ $gasStation->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <x-input-error :messages="$errors->get('gas_station_id')" class="mt-2" />
+                                    </div>
+                                    <button type="button" onclick="openGasStationModal('gas_station_id')" class="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm whitespace-nowrap mb-1" title="Cadastrar novo posto">
+                                        + Novo
+                                    </button>
+                                </div>
                             </div>
 
                             <div>
@@ -138,7 +145,196 @@
         </div>
     </div>
 
+    <!-- Modal para cadastro de posto -->
+    <x-modal name="new-gas-station-modal" maxWidth="2xl">
+        <form id="gas-station-form" class="p-6">
+            @csrf
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                {{ __('Cadastrar Novo Posto') }}
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <x-input-label for="modal_gas_station_name" :value="__('Nome')" />
+                    <x-text-input id="modal_gas_station_name" class="block mt-1 w-full" type="text" name="name" required autofocus />
+                    <div id="error_name" class="mt-2"></div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <x-input-label for="modal_gas_station_description" :value="__('Descrição (opcional)')" />
+                    <textarea id="modal_gas_station_description" name="description" rows="3" class="block mt-1 w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600"></textarea>
+                    <div id="error_description" class="mt-2"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end mt-6">
+                <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal', { detail: 'new-gas-station-modal' }))" class="text-gray-600 hover:text-gray-900 mr-4">
+                    Cancelar
+                </button>
+                <x-primary-button type="submit">
+                    {{ __('Salvar') }}
+                </x-primary-button>
+            </div>
+        </form>
+    </x-modal>
+
     <script>
+        // Função para abrir modal de cadastro de posto
+        function openGasStationModal(selectId) {
+            currentGasStationSelectId = selectId;
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'new-gas-station-modal' }));
+            // Limpar formulário
+            document.getElementById('gas-station-form').reset();
+            // Limpar erros
+            document.querySelectorAll('[id^="error_"]').forEach(el => {
+                el.innerHTML = '';
+            });
+        }
+
+        let currentGasStationSelectId = null;
+
+        // Submeter formulário de posto via AJAX
+        document.getElementById('gas-station-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            
+            // Desabilitar botão e mostrar loading
+            submitButton.disabled = true;
+            submitButton.textContent = 'Salvando...';
+            
+            // Limpar erros anteriores
+            document.querySelectorAll('[id^="error_"]').forEach(el => {
+                el.innerHTML = '';
+            });
+
+            fetch('{{ route("gas-stations.store-ajax") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || formData.get('_token')
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(JSON.stringify(data));
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Adicionar novo posto no select
+                    updateGasStationSelect(data.gasStation);
+                    
+                    // Selecionar o novo posto na select que acionou o modal
+                    if (currentGasStationSelectId) {
+                        const select = document.getElementById(currentGasStationSelectId);
+                        if (select) {
+                            select.value = data.gasStation.id;
+                        }
+                    }
+                    
+                    // Fechar modal
+                    window.dispatchEvent(new CustomEvent('close-modal', { detail: 'new-gas-station-modal' }));
+                    
+                    // Limpar formulário
+                    this.reset();
+                    
+                    // Mostrar mensagem de sucesso
+                    if (window.showToast) {
+                        window.showToast(data.message, 'success');
+                    } else {
+                        alert(data.message);
+                    }
+                } else {
+                    // Mostrar erros de validação
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(key => {
+                            const errorElement = document.getElementById(`error_${key}`);
+                            if (errorElement) {
+                                const errorMessage = data.errors[key][0];
+                                errorElement.innerHTML = `
+                                    <ul class="mt-1.5 text-sm text-red-600 dark:text-red-400 space-y-1">
+                                        <li class="flex items-center">
+                                            <svg class="w-4 h-4 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                            </svg>
+                                            ${errorMessage}
+                                        </li>
+                                    </ul>
+                                `;
+                            }
+                        });
+                    } else if (data.message) {
+                        if (window.showToast) {
+                            window.showToast(data.message, 'error');
+                        } else {
+                            alert(data.message);
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                try {
+                    const errorData = JSON.parse(error.message);
+                    if (errorData.errors) {
+                        Object.keys(errorData.errors).forEach(key => {
+                            const errorElement = document.getElementById(`error_${key}`);
+                            if (errorElement) {
+                                const errorMessage = errorData.errors[key][0];
+                                errorElement.innerHTML = `
+                                    <ul class="mt-1.5 text-sm text-red-600 dark:text-red-400 space-y-1">
+                                        <li class="flex items-center">
+                                            <svg class="w-4 h-4 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                            </svg>
+                                            ${errorMessage}
+                                        </li>
+                                    </ul>
+                                `;
+                            }
+                        });
+                    } else if (errorData.message) {
+                        if (window.showToast) {
+                            window.showToast(errorData.message, 'error');
+                        } else {
+                            alert(errorData.message);
+                        }
+                    }
+                } catch (e) {
+                    if (window.showToast) {
+                        window.showToast('Erro ao cadastrar posto. Tente novamente.', 'error');
+                    } else {
+                        alert('Erro ao cadastrar posto. Tente novamente.');
+                    }
+                }
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            });
+        });
+
+        function updateGasStationSelect(newGasStation) {
+            const select = document.getElementById('gas_station_id');
+            if (select) {
+                // Verificar se o posto já existe na select
+                const exists = Array.from(select.options).some(option => option.value == newGasStation.id);
+                if (!exists) {
+                    const option = document.createElement('option');
+                    option.value = newGasStation.id;
+                    option.textContent = newGasStation.name;
+                    select.appendChild(option);
+                }
+            }
+        }
+
         // Controlar habilitação/desabilitação do campo de usuário para admin
         @if(auth()->user()->role === 'admin')
         document.addEventListener('DOMContentLoaded', function() {

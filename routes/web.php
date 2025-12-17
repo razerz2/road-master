@@ -192,6 +192,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('gas-stations')->name('gas-stations.')->group(function () {
         Route::get('/', [\App\Http\Controllers\GasStationController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\GasStationController::class, 'store'])->name('store');
+        Route::post('/store-ajax', [\App\Http\Controllers\GasStationController::class, 'storeAjax'])->name('store-ajax');
         Route::put('/{gasStation}', [\App\Http\Controllers\GasStationController::class, 'update'])->name('update');
         Route::delete('/{gasStation}', [\App\Http\Controllers\GasStationController::class, 'destroy'])->name('destroy');
     });

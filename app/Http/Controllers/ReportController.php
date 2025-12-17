@@ -281,7 +281,7 @@ class ReportController extends Controller
         $vehicleId = $request->input('vehicle_id');
         $fuelType = $request->input('fuel_type');
 
-        $query = Fueling::with(['vehicle', 'user'])
+        $query = Fueling::with(['vehicle', 'user', 'gasStation'])
             ->whereBetween('date_time', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1086,7 +1086,7 @@ class ReportController extends Controller
         $vehicleId = $request->input('vehicle_id');
         $fuelType = $request->input('fuel_type');
 
-        $query = Fueling::with(['vehicle', 'user'])
+        $query = Fueling::with(['vehicle', 'user', 'gasStation'])
             ->whereBetween('date_time', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1108,7 +1108,7 @@ class ReportController extends Controller
                 'Litros' => number_format($fueling->liters, 2, ',', '.') . ' L',
                 'Preço/L' => 'R$ ' . number_format($fueling->price_per_liter, 2, ',', '.'),
                 'Valor Total' => 'R$ ' . number_format($fueling->total_amount, 2, ',', '.'),
-                'Posto' => $fueling->gas_station_name ?? '-',
+                'Posto' => $fueling->gasStation->name ?? $fueling->gas_station_name ?? '-',
                 'Usuário' => $fueling->user->name ?? '-',
             ];
         }
@@ -1130,7 +1130,7 @@ class ReportController extends Controller
         $vehicleId = $request->input('vehicle_id');
         $fuelType = $request->input('fuel_type');
 
-        $query = Fueling::with(['vehicle', 'user'])
+        $query = Fueling::with(['vehicle', 'user', 'gasStation'])
             ->whereBetween('date_time', [$startDate, $endDate]);
 
         if ($vehicleId) {
@@ -1152,7 +1152,7 @@ class ReportController extends Controller
                 'Litros' => number_format($fueling->liters, 2, ',', '.') . ' L',
                 'Preço/L' => 'R$ ' . number_format($fueling->price_per_liter, 2, ',', '.'),
                 'Valor Total' => 'R$ ' . number_format($fueling->total_amount, 2, ',', '.'),
-                'Posto' => $fueling->gas_station_name ?? '-',
+                'Posto' => $fueling->gasStation->name ?? $fueling->gas_station_name ?? '-',
                 'Usuário' => $fueling->user->name ?? '-',
             ];
         }

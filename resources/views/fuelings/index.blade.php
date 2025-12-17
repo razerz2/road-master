@@ -71,7 +71,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($fueling->liters, 2, ',', '.') }} L</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">R$ {{ number_format($fueling->total_amount, 2, ',', '.') }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ number_format($fueling->odometer, 0, ',', '.') }} km</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $fueling->gas_station_name ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{{ $fueling->gasStation->name ?? $fueling->gas_station_name ?? '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             @can('update', $fueling)
                                             <a href="{{ route('fuelings.edit', $fueling) }}" class="text-indigo-600 hover:text-indigo-900 mr-2">Editar</a>

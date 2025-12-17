@@ -18,7 +18,7 @@ class FuelingController extends Controller
     {
         Gate::authorize('viewAny', Fueling::class);
 
-        $query = Fueling::with(['vehicle', 'user']);
+        $query = Fueling::with(['vehicle', 'user', 'gasStation']);
 
         // Filtros
         if ($request->filled('start_date')) {

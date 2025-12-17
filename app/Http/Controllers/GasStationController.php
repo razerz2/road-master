@@ -83,4 +83,44 @@ class GasStationController extends Controller
         return redirect()->route('gas-stations.index')
             ->with('success', 'Posto excluído com sucesso!');
     }
+
+    public function storeAjax(Request $request)
+    {
+        Gate::authorize('viewAny', \App\Models\User::class);
+        
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:gas_stations,name',
+                'description' => 'nullable|string|max:1000',
+                'active' => 'boolean',
+                'order' => 'nullable|integer|min:0',
+            ]);
+
+            $validated['slug'] = Str::slug($validated['name']);
+            $validated['active'] = $request->has('active') ? true : true; // Sempre ativo por padrão
+            $validated['order'] = $validated['order'] ?? 0;
+
+            $gasStation = GasStation::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Posto cadastrado com sucesso!',
+                'gasStation' => [
+                    'id' => $gasStation->id,
+                    'name' => $gasStation->name,
+                ]
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro de validação',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao cadastrar posto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
