@@ -637,9 +637,17 @@
                                                 @endif
                                                 <input type="file" name="logo" id="logo" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300" accept="image/png,image/jpeg,image/jpg,image/svg+xml">
                                                 <x-input-error :messages="$errors->get('logo')" class="mt-2" />
-                                                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                                    Formatos aceitos: PNG, JPG, JPEG, SVG. Tamanho recomendado: 200x50px.
-                                                </p>
+                                                <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                                    <p class="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
+                                                        ℹ️ Informações sobre o tamanho da logo:
+                                                    </p>
+                                                    <ul class="text-sm text-blue-800 dark:text-blue-400 space-y-1 list-disc list-inside">
+                                                        <li><strong>Tamanho usado na página de login:</strong> 176px × 176px (w-44 h-44)</li>
+                                                        <li><strong>Tamanho recomendado:</strong> Mínimo 176px × 176px para melhor qualidade</li>
+                                                        <li><strong>Formatos aceitos:</strong> PNG, JPG, JPEG, SVG</li>
+                                                        <li><strong>Dica:</strong> Para logos quadradas, use 176×176px. Para logos horizontais, mantenha proporção similar (ex: 352×176px)</li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
 

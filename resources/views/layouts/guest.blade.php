@@ -38,34 +38,38 @@
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
-            <div class="text-center">
-                <a href="/" class="block">
+            <div class="w-full sm:max-w-md bg-white dark:bg-gray-800 shadow-lg overflow-hidden sm:rounded-lg">
+                <!-- Card Header com Logo e Título -->
+                <div class="px-6 py-8 text-center bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <a href="/" class="block">
+                        @php
+                            try {
+                                $logoPath = \App\Models\SystemSetting::get('system_logo');
+                                $logoUrl = $logoPath ? route('storage.serve', ['path' => $logoPath]) : null;
+                            } catch (\Exception $e) {
+                                $logoUrl = null;
+                            }
+                        @endphp
+                        @if($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="{{ config('app.name', 'Laravel') }}" class="w-44 h-44 mx-auto object-contain">
+                        @else
+                            <x-application-logo class="w-44 h-44 mx-auto fill-current text-gray-500 dark:text-gray-400" />
+                        @endif
+                    </a>
                     @php
                         try {
-                            $logoPath = \App\Models\SystemSetting::get('system_logo');
-                            $logoUrl = $logoPath ? route('storage.serve', ['path' => $logoPath]) : null;
+                            $appName = \App\Models\SystemSetting::get('app_name') ?? config('app.name', 'Road Master');
                         } catch (\Exception $e) {
-                            $logoUrl = null;
+                            $appName = config('app.name', 'Road Master');
                         }
                     @endphp
-                    @if($logoUrl)
-                        <img src="{{ $logoUrl }}" alt="{{ config('app.name', 'Laravel') }}" class="w-32 h-32 mx-auto object-contain">
-                    @else
-                        <x-application-logo class="w-32 h-32 mx-auto fill-current text-gray-500" />
-                    @endif
-                </a>
-                @php
-                    try {
-                        $appName = \App\Models\SystemSetting::get('app_name') ?? config('app.name', 'Road Master');
-                    } catch (\Exception $e) {
-                        $appName = config('app.name', 'Road Master');
-                    }
-                @endphp
-                <h1 class="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $appName }}</h1>
-            </div>
+                    <h1 class="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">{{ $appName }}</h1>
+                </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+                <!-- Card Body -->
+                <div class="px-6 py-6">
+                    {{ $slot }}
+                </div>
             </div>
         </div>
     </body>
