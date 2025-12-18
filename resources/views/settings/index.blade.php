@@ -946,30 +946,7 @@
                             @csrf
                             @method('PUT')
                             
-                            <div class="space-y-6">
-                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
-                                    <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
-                                        📧 Informações Importantes
-                                    </h4>
-                                    <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                                        <p>
-                                            <strong>Configuração do Servidor:</strong> As configurações do servidor de email (SMTP) devem ser configuradas no arquivo <code>.env</code> do sistema.
-                                        </p>
-                                        <p>
-                                            <strong>Variáveis necessárias:</strong>
-                                        </p>
-                                        <ul class="list-disc list-inside ml-4 space-y-1">
-                                            <li><code>MAIL_MAILER</code> - Tipo de mailer (smtp, sendmail, etc.)</li>
-                                            <li><code>MAIL_HOST</code> - Servidor SMTP</li>
-                                            <li><code>MAIL_PORT</code> - Porta do servidor</li>
-                                            <li><code>MAIL_USERNAME</code> - Usuário do email</li>
-                                            <li><code>MAIL_PASSWORD</code> - Senha do email</li>
-                                            <li><code>MAIL_ENCRYPTION</code> - Tipo de criptografia (tls, ssl)</li>
-                                        </ul>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" x-data="{ 
+                            <div class="space-y-6" x-data="{ 
                                     emailEnabled: {{ old('email_notifications_enabled', $settings['email']['email_notifications_enabled'] ?? '0') === '1' ? 'true' : 'false' }},
                                     testingEmail: false,
                                     testMessage: '',
@@ -1033,6 +1010,29 @@
                                         }
                                     }
                                 }">
+                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
+                                    <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                                        📧 Informações Importantes
+                                    </h4>
+                                    <div class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                                        <p>
+                                            <strong>Configuração do Servidor:</strong> As configurações do servidor de email (SMTP) devem ser configuradas no arquivo <code>.env</code> do sistema.
+                                        </p>
+                                        <p>
+                                            <strong>Variáveis necessárias:</strong>
+                                        </p>
+                                        <ul class="list-disc list-inside ml-4 space-y-1">
+                                            <li><code>MAIL_MAILER</code> - Tipo de mailer (smtp, sendmail, etc.)</li>
+                                            <li><code>MAIL_HOST</code> - Servidor SMTP</li>
+                                            <li><code>MAIL_PORT</code> - Porta do servidor</li>
+                                            <li><code>MAIL_USERNAME</code> - Usuário do email</li>
+                                            <li><code>MAIL_PASSWORD</code> - Senha do email</li>
+                                            <li><code>MAIL_ENCRYPTION</code> - Tipo de criptografia (tls, ssl)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div class="md:col-span-2">
                                         <div class="flex items-center">
                                             <input 
@@ -1150,9 +1150,9 @@
                                             x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         >
-                                            <option value="smtp" {{ old('mail_mailer', env('MAIL_MAILER', 'smtp')) === 'smtp' ? 'selected' : '' }}>SMTP</option>
-                                            <option value="sendmail" {{ old('mail_mailer', env('MAIL_MAILER')) === 'sendmail' ? 'selected' : '' }}>Sendmail</option>
-                                            <option value="log" {{ old('mail_mailer', env('MAIL_MAILER')) === 'log' ? 'selected' : '' }}>Log (apenas para testes)</option>
+                                            <option value="smtp" {{ old('mail_mailer', $settings['email']['mail_mailer'] ?? env('MAIL_MAILER', 'smtp')) === 'smtp' ? 'selected' : '' }}>SMTP</option>
+                                            <option value="sendmail" {{ old('mail_mailer', $settings['email']['mail_mailer'] ?? env('MAIL_MAILER')) === 'sendmail' ? 'selected' : '' }}>Sendmail</option>
+                                            <option value="log" {{ old('mail_mailer', $settings['email']['mail_mailer'] ?? env('MAIL_MAILER')) === 'log' ? 'selected' : '' }}>Log (apenas para testes)</option>
                                         </select>
                                         <x-input-error :messages="$errors->get('mail_mailer')" class="mt-2" />
                                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -1168,7 +1168,7 @@
                                             x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="text" 
                                             name="mail_host" 
-                                            :value="old('mail_host', env('MAIL_HOST', 'smtp.mailtrap.io'))" 
+                                            :value="old('mail_host', $settings['email']['mail_host'] ?? env('MAIL_HOST', 'smtp.mailtrap.io'))" 
                                             x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         />
@@ -1186,7 +1186,7 @@
                                             x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="number" 
                                             name="mail_port" 
-                                            :value="old('mail_port', env('MAIL_PORT', '2525'))" 
+                                            :value="old('mail_port', $settings['email']['mail_port'] ?? env('MAIL_PORT', '2525'))" 
                                             x-bind:disabled="!emailEnabled"
                                             x-bind:required="emailEnabled"
                                         />
@@ -1206,8 +1206,8 @@
                                             x-bind:disabled="!emailEnabled"
                                         >
                                             <option value="">Nenhuma</option>
-                                            <option value="tls" {{ old('mail_encryption', env('MAIL_ENCRYPTION', 'tls')) === 'tls' ? 'selected' : '' }}>TLS</option>
-                                            <option value="ssl" {{ old('mail_encryption', env('MAIL_ENCRYPTION')) === 'ssl' ? 'selected' : '' }}>SSL</option>
+                                            <option value="tls" {{ old('mail_encryption', $settings['email']['mail_encryption'] ?? env('MAIL_ENCRYPTION', 'tls')) === 'tls' ? 'selected' : '' }}>TLS</option>
+                                            <option value="ssl" {{ old('mail_encryption', $settings['email']['mail_encryption'] ?? env('MAIL_ENCRYPTION')) === 'ssl' ? 'selected' : '' }}>SSL</option>
                                         </select>
                                         <x-input-error :messages="$errors->get('mail_encryption')" class="mt-2" />
                                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -1223,7 +1223,7 @@
                                             x-bind:class="emailEnabled ? '' : 'opacity-50 cursor-not-allowed'"
                                             type="text" 
                                             name="mail_username" 
-                                            :value="old('mail_username', env('MAIL_USERNAME', ''))" 
+                                            :value="old('mail_username', $settings['email']['mail_username'] ?? env('MAIL_USERNAME', ''))" 
                                             x-bind:disabled="!emailEnabled"
                                         />
                                         <x-input-error :messages="$errors->get('mail_username')" class="mt-2" />

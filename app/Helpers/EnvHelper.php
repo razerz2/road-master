@@ -20,32 +20,29 @@ class EnvHelper
         }
 
         $envContent = file_get_contents($envPath);
+        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $envContent));
+        $found = false;
         
-        // Se o valor estiver vazio, remover a variável
-        if (empty($value) && $value !== '0') {
-            $pattern = "/^{$key}=.*$/m";
-            $envContent = preg_replace($pattern, '', $envContent);
-            // Remover linhas vazias duplicadas
-            $envContent = preg_replace("/\n\n+/", "\n\n", $envContent);
-        } else {
-            // Escapar caracteres especiais no valor
-            $escapedValue = self::escapeEnvValue($value);
-            
-            // Padrão para encontrar a linha (com ou sem aspas)
-            $pattern = "/^{$key}=.*$/m";
-            
-            // Verificar se a variável já existe
-            if (preg_match($pattern, $envContent)) {
-                // Substituir a linha existente
-                $replacement = "{$key}={$escapedValue}";
-                $envContent = preg_replace($pattern, $replacement, $envContent);
-            } else {
-                // Adicionar nova variável no final do arquivo
-                $envContent .= "\n{$key}={$escapedValue}";
+        $escapedValue = self::escapeEnvValue($value);
+        $newLine = "{$key}={$escapedValue}";
+
+        foreach ($lines as $i => $line) {
+            if (strpos(trim($line), "{$key}=") === 0) {
+                if (empty($value) && $value !== '0') {
+                    unset($lines[$i]);
+                } else {
+                    $lines[$i] = $newLine;
+                }
+                $found = true;
+                break;
             }
         }
-        
-        return file_put_contents($envPath, $envContent) !== false;
+
+        if (!$found && (!empty($value) || $value === '0')) {
+            $lines[] = $newLine;
+        }
+
+        return file_put_contents($envPath, implode("\n", $lines)) !== false;
     }
 
     /**
@@ -81,29 +78,31 @@ class EnvHelper
         }
 
         $envContent = file_get_contents($envPath);
+        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $envContent));
         
         foreach ($variables as $key => $value) {
-            // Se o valor estiver vazio, remover a variável
-            if (empty($value) && $value !== '0') {
-                $pattern = "/^{$key}=.*$/m";
-                $envContent = preg_replace($pattern, '', $envContent);
-            } else {
-                $escapedValue = self::escapeEnvValue($value);
-                $pattern = "/^{$key}=.*$/m";
-                
-                if (preg_match($pattern, $envContent)) {
-                    $replacement = "{$key}={$escapedValue}";
-                    $envContent = preg_replace($pattern, $replacement, $envContent);
-                } else {
-                    $envContent .= "\n{$key}={$escapedValue}";
+            $found = false;
+            $escapedValue = self::escapeEnvValue($value);
+            $newLine = "{$key}={$escapedValue}";
+
+            foreach ($lines as $i => $line) {
+                if (strpos(trim($line), "{$key}=") === 0) {
+                    if (empty($value) && $value !== '0') {
+                        unset($lines[$i]);
+                    } else {
+                        $lines[$i] = $newLine;
+                    }
+                    $found = true;
+                    break;
                 }
+            }
+
+            if (!$found && (!empty($value) || $value === '0')) {
+                $lines[] = $newLine;
             }
         }
         
-        // Remover linhas vazias duplicadas
-        $envContent = preg_replace("/\n\n+/", "\n\n", $envContent);
-        
-        return file_put_contents($envPath, $envContent) !== false;
+        return file_put_contents($envPath, implode("\n", $lines)) !== false;
     }
 }
 

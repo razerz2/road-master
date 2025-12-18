@@ -369,6 +369,17 @@ class SettingsController extends Controller
         SystemSetting::set('email_notifications_enabled', $emailEnabled ? '1' : '0', 'boolean', 'email', 'Habilitar notificações por email');
         SystemSetting::set('email_from_address', $validated['email_from_address'], 'string', 'email', 'Endereço de email remetente');
         SystemSetting::set('email_from_name', $validated['email_from_name'], 'string', 'email', 'Nome do remetente');
+        
+        // Salvar configurações SMTP no banco também para persistência
+        SystemSetting::set('mail_mailer', $validated['mail_mailer'] ?? 'smtp', 'string', 'email', 'Tipo de mailer');
+        SystemSetting::set('mail_host', $validated['mail_host'] ?? '', 'string', 'email', 'Servidor SMTP');
+        SystemSetting::set('mail_port', (string)($validated['mail_port'] ?? '587'), 'string', 'email', 'Porta do servidor');
+        SystemSetting::set('mail_encryption', $validated['mail_encryption'] ?? '', 'string', 'email', 'Criptografia');
+        SystemSetting::set('mail_username', $validated['mail_username'] ?? '', 'string', 'email', 'Usuário SMTP');
+        
+        if (!empty($request->mail_password)) {
+            SystemSetting::set('mail_password', $request->mail_password, 'string', 'email', 'Senha SMTP');
+        }
 
         // Se notificações de email estão habilitadas, atualizar configurações SMTP no .env
         if ($emailEnabled) {
