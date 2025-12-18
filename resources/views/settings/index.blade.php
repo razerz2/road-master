@@ -960,17 +960,18 @@
                                         this.testMessage = '';
                                         this.testMessageType = '';
                                         
-                                        // Coletar dados do formulário
-                                        const formData = {
-                                            email_from_address: document.getElementById('email_from_address').value,
-                                            email_from_name: document.getElementById('email_from_name').value,
-                                            mail_mailer: document.getElementById('mail_mailer').value,
-                                            mail_host: document.getElementById('mail_host').value,
-                                            mail_port: document.getElementById('mail_port').value,
-                                            mail_encryption: document.getElementById('mail_encryption').value,
-                                            mail_username: document.getElementById('mail_username').value,
-                                            mail_password: document.getElementById('mail_password').value,
-                                        };
+                        // Coletar dados do formulário
+                        const formData = {
+                            email_from_address: document.getElementById('email_from_address').value,
+                            email_from_name: document.getElementById('email_from_name').value,
+                            mail_mailer: document.getElementById('mail_mailer').value,
+                            mail_host: document.getElementById('mail_host').value,
+                            mail_port: document.getElementById('mail_port').value,
+                            mail_encryption: document.getElementById('mail_encryption').value,
+                            mail_username: document.getElementById('mail_username').value,
+                            mail_password: document.getElementById('mail_password').value,
+                            mail_ignore_ssl: document.getElementById('mail_ignore_ssl').checked ? '1' : '0',
+                        };
                                         
                                         try {
                                             const response = await fetch('{{ route('settings.testEmailSettings') }}', {
@@ -1247,6 +1248,24 @@
                                         <x-input-error :messages="$errors->get('mail_password')" class="mt-2" />
                                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                             Senha para autenticação no servidor SMTP. Deixe em branco para manter a senha atual.
+                                        </p>
+                                    </div>
+
+                                    <div class="md:col-span-2">
+                                        <div class="flex items-center">
+                                            <input 
+                                                type="checkbox" 
+                                                id="mail_ignore_ssl" 
+                                                name="mail_ignore_ssl" 
+                                                value="1"
+                                                class="rounded border-gray-300 dark:border-gray-700"
+                                                {{ old('mail_ignore_ssl', $settings['email']['mail_ignore_ssl'] ?? '0') === '1' ? 'checked' : '' }}
+                                                x-bind:disabled="!emailEnabled"
+                                            >
+                                            <x-input-label for="mail_ignore_ssl" :value="__('Ignorar Verificação de Certificado SSL')" class="ml-2" />
+                                        </div>
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Habilite esta opção se o seu servidor SMTP possui um certificado SSL inválido ou expirado (comum em servidores compartilhados). <strong>Atenção:</strong> Isso reduz a segurança da conexão.
                                         </p>
                                     </div>
                                 </div>

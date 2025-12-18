@@ -363,7 +363,10 @@ class SettingsController extends Controller
             'mail_encryption' => 'nullable|string|in:tls,ssl',
             'mail_username' => 'nullable|string|max:255',
             'mail_password' => 'nullable|string|max:255',
+            'mail_ignore_ssl' => 'nullable|boolean',
         ]);
+
+        $ignoreSSL = $request->has('mail_ignore_ssl') && $request->mail_ignore_ssl === '1';
 
         // Salvar configurações de email no banco
         SystemSetting::set('email_notifications_enabled', $emailEnabled ? '1' : '0', 'boolean', 'email', 'Habilitar notificações por email');
@@ -376,6 +379,7 @@ class SettingsController extends Controller
         SystemSetting::set('mail_port', (string)($validated['mail_port'] ?? '587'), 'string', 'email', 'Porta do servidor');
         SystemSetting::set('mail_encryption', $validated['mail_encryption'] ?? '', 'string', 'email', 'Criptografia');
         SystemSetting::set('mail_username', $validated['mail_username'] ?? '', 'string', 'email', 'Usuário SMTP');
+        SystemSetting::set('mail_ignore_ssl', $ignoreSSL ? '1' : '0', 'boolean', 'email', 'Ignorar verificação SSL');
         
         if (!empty($request->mail_password)) {
             SystemSetting::set('mail_password', $request->mail_password, 'string', 'email', 'Senha SMTP');
@@ -387,6 +391,8 @@ class SettingsController extends Controller
                 'MAIL_MAILER' => $validated['mail_mailer'] ?? 'smtp',
                 'MAIL_HOST' => $validated['mail_host'] ?? '',
                 'MAIL_PORT' => (string)($validated['mail_port'] ?? '587'),
+                'MAIL_VERIFY_PEER' => $ignoreSSL ? 'false' : 'true',
+                'MAIL_VERIFY_PEER_NAME' => $ignoreSSL ? 'false' : 'true',
             ];
 
             // Adicionar criptografia se fornecida
@@ -419,6 +425,13 @@ class SettingsController extends Controller
                 return redirect()->route('settings.index', ['activeTab' => 'email'])
                     ->with('error', 'Erro ao atualizar arquivo .env: ' . $e->getMessage());
             }
+        } else {
+            // Se emailEnabled for false, remover todas as configurações de email do .env
+            EnvHelper::removeMultipleEnv([
+                'MAIL_MAILER', 'MAIL_HOST', 'MAIL_PORT', 'MAIL_ENCRYPTION',
+                'MAIL_USERNAME', 'MAIL_PASSWORD', 'MAIL_FROM_ADDRESS', 'MAIL_FROM_NAME',
+                'MAIL_VERIFY_PEER', 'MAIL_VERIFY_PEER_NAME'
+            ]);
         }
 
         return redirect()->route('settings.index', ['activeTab' => 'email'])
@@ -453,6 +466,8 @@ class SettingsController extends Controller
 
             // Se o usuário forneceu configurações SMTP no formulário, atualizar temporariamente
             if ($request->has('mail_host') && !empty($request->input('mail_host'))) {
+                $ignoreSSL = $request->input('mail_ignore_ssl') === '1';
+                
                 // Atualizar configurações temporariamente usando Config
                 config([
                     'mail.mailers.smtp.host' => $request->input('mail_host'),
@@ -460,6 +475,8 @@ class SettingsController extends Controller
                     'mail.mailers.smtp.username' => $request->input('mail_username', ''),
                     'mail.mailers.smtp.password' => $request->input('mail_password', ''),
                     'mail.mailers.smtp.encryption' => $request->input('mail_encryption', 'tls'),
+                    'mail.mailers.smtp.stream.ssl.verify_peer' => !$ignoreSSL,
+                    'mail.mailers.smtp.stream.ssl.verify_peer_name' => !$ignoreSSL,
                     'mail.default' => $request->input('mail_mailer', 'smtp'),
                 ]);
                 
@@ -470,6 +487,8 @@ class SettingsController extends Controller
                     app('config')->set('mail.mailers.smtp.username', $request->input('mail_username', ''));
                     app('config')->set('mail.mailers.smtp.password', $request->input('mail_password', ''));
                     app('config')->set('mail.mailers.smtp.encryption', $request->input('mail_encryption', 'tls'));
+                    app('config')->set('mail.mailers.smtp.stream.ssl.verify_peer', !$ignoreSSL);
+                    app('config')->set('mail.mailers.smtp.stream.ssl.verify_peer_name', !$ignoreSSL);
                     app('config')->set('mail.default', $request->input('mail_mailer', 'smtp'));
                 }
             }
